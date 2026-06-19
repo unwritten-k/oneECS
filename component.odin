@@ -1,15 +1,7 @@
 package main
 
-Component :: struct {
-    id: typeid,
-    ptr: rawptr
-}
+MAX_COMPONENTS :: #config(MAX_COMPONENTS, 32)
 
-cast_component_to :: proc ($T: typeid, component: Component, caller_loc:=#caller_location) -> T {
-    if component.id == T {
-        return cast(T)component
-    }
-    else {
-        panic("ID of given component and desired type do not match", caller_loc)
-    }
-}
+Component_Id :: u8
+
+Component_Signature :: bit_set[0..<MAX_COMPONENTS; u32]
