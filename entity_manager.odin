@@ -60,6 +60,6 @@ entity_get_signature :: proc (mng: ^Entity_Manager, ent: Entity) -> Component_Si
 }
 
 entity_is_valid :: proc (ent: Entity) -> bool {
-    return ent > 0 && ent < MAX_ENTITIES
+    return ent >= 0 && ent < MAX_ENTITIES
 }
 
