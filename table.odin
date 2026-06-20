@@ -64,8 +64,7 @@ table_get_data :: proc (table: ^Table($T), entity: Entity) -> (component:^T, ok:
 // Returns true if entity is found. Otherwise false
 //
 // **Note**: this function excepts that given entity is valid
-@(private="file")
-has_entity :: proc (table: ^Table($T), entity:Entity) -> bool {
+table_has_entity :: proc (table: ^Table($T), entity:Entity) -> bool {
 
     idx := table.entity_to_idx[entity]
 
