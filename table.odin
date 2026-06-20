@@ -24,7 +24,7 @@ table_init :: proc (table: ^Table($T)) {
 table_insert :: proc (table: ^Table($T), entity: Entity, component: T) -> bool {
 
     if !entity_is_valid(entity) do return false
-    if !table_has_entity(table, entity) do return false
+    if table_has_entity(table, entity) do return false
 
     idx := table.size
 
