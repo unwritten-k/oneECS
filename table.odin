@@ -69,6 +69,10 @@ table_get_data :: proc (table: ^Table($T), entity: Entity) -> (component:^T, ok:
     return &table.comp_arr[table.entity_to_idx[entity]], true
 }
 
+table_clear :: proc (table: ^Table($T)) {
+    table.size = 0
+}
+
 // Returns true if entity is found. Otherwise false
 //
 // **Note**: this function excepts that given entity is valid
