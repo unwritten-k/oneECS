@@ -32,7 +32,7 @@ table_insert :: proc (table: ^Table($T), entity: Entity, component: T) -> bool {
 }
 
 // Returns true, if removed entity data from array. Otherwise returns false
-table_remove :: proc (table: ^Table($T), entity: Entity, component: T) -> bool {
+table_remove :: proc (table: ^Table($T), entity: Entity) -> bool {
 
     if !entity_is_valid(entity) do return false
     if !has_entity(table, entity) do return false
