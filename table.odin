@@ -26,7 +26,7 @@ table_init :: proc (table: ^Table($T)) {
 table_insert :: proc (table: ^Table($T), entity: Entity, component: T) -> bool {
 
     if !entity_is_valid(entity) do return false
-    if !has_entity(table, entity) do return false
+    if !table_has_entity(table, entity) do return false
 
     idx := table.size
 
@@ -43,7 +43,7 @@ table_insert :: proc (table: ^Table($T), entity: Entity, component: T) -> bool {
 table_remove :: proc (table: ^Table($T), entity: Entity) -> bool {
 
     if !entity_is_valid(entity) do return false
-    if !has_entity(table, entity) do return false
+    if !table_has_entity(table, entity) do return false
 
     entity_to_remove_idx := table.entity_to_idx[entity]
     last_idx := table.size - 1
@@ -64,7 +64,7 @@ table_remove :: proc (table: ^Table($T), entity: Entity) -> bool {
 table_get_data :: proc (table: ^Table($T), entity: Entity) -> (component:^T, ok:bool) {
 
     if !entity_is_valid(entity) do return nil, false
-    if !has_entity(table, entity) do return nil, false
+    if !table_has_entity(table, entity) do return nil, false
 
     return &table.comp_arr[table.entity_to_idx[entity]], true
 }
