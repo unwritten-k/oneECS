@@ -3,7 +3,7 @@ package main
 import "base:runtime"
 
 Table_Base :: struct {
-    type_info: runtime.Type_Info,
+    type_info: ^runtime.Type_Info,
 
     entity_to_idx: [MAX_ENTITIES]int,
     idx_to_entity: [MAX_ENTITIES]Entity,
