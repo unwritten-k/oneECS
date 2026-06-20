@@ -1,6 +1,10 @@
 package main
 
+import "base:runtime"
+
 Table_Base :: struct {
+    type_info: runtime.Type_Info,
+
     entity_to_idx: [MAX_ENTITIES]int,
     idx_to_entity: [MAX_ENTITIES]Entity,
 
@@ -12,6 +16,10 @@ Table_Base :: struct {
 Table :: struct($T: typeid) {
     using base: Table_Base,
     comp_arr: [MAX_ENTITIES]T,
+}
+
+table_init :: proc (table: ^Table($T)) {
+    table.type_info = type_info_of(typeid_of(type_of(table)))
 }
 
 // Returns true, if inserted entity data in array. Otherwise returns false
