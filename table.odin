@@ -8,8 +8,6 @@ Table_Base :: struct {
     entity_to_idx: [MAX_ENTITIES]int,
     idx_to_entity: [MAX_ENTITIES]Entity,
 
-    entity_to_raw: [MAX_ENTITIES]rawptr,
-
     size: int,
 }
 
