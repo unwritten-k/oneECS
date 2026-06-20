@@ -72,14 +72,8 @@ table_clear :: proc (table: ^Table($T)) {
 }
 
 // Returns true if entity is found. Otherwise false
-//
-// **Note**: this function excepts that given entity is valid
 table_has_entity :: proc (table: ^Table($T), entity:Entity) -> bool {
 
-    idx := table.entity_to_idx[entity]
-
-    if table.idx_to_entity[idx] != entity do return false
-
-    return true
+    return entity >= 0 && entity < i64(table.size)
 }
 
