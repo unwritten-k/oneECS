@@ -42,10 +42,16 @@ free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) {
 
 //////// Bytes table
 
-// cannot be initialized, only casted from Table($T)
 Table_Bytes :: struct {
     using base: Table_Base,
     bytes_arr: []byte
+}
+
+table_bytes_init :: proc (table: ^Table_Bytes, type_info: ^runtime.Type_Info, table_capacity:=MAX_ENTITIES, allocator: runtime.Allocator, loc:=#caller_location) {
+    table_base_init(&table.base, table_capacity, allocator, loc)
+    table.type_info = type_info
+
+    table.bytes_arr = make ([]byte, type_info.size*table_capacity, allocator, loc)
 }
 
 // Returns true, if removed entity data from array. Otherwise returns false
