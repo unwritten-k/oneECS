@@ -2,11 +2,17 @@ package main
 
 import "base:runtime"
 
+/////// Table base
+
 Table_Base :: struct {
+    allocator: runtime.Allocator,
+
     type_info: ^runtime.Type_Info,
 
-    entity_to_idx: [MAX_ENTITIES]int,
-    idx_to_entity: [MAX_ENTITIES]Entity,
+    entity_to_idx: []int,
+    idx_to_entity: []Entity,
+
+    idx_to_rawptr: []rawptr,
 
     size: int,
 }
@@ -37,24 +43,29 @@ table_init :: proc (table: ^Table($T), allocator:=context.allocator, loc:=#calle
 }
 
 // Returns true, if inserted entity data in array. Otherwise returns false
-table_insert :: proc (table: ^Table($T), entity: Entity, component: T) -> bool {
+table_add_component :: proc (table: ^Table($T), entity: Entity, loc:=#caller_location) -> (component: ^T, ok: bool) {
 
-    if !entity_is_valid(entity) do return false
-    if table_has_entity(table, entity) do return false
+    if !entity_is_valid(entity) do return nil, false
+    if table_has_entity(table, entity) do return nil, false
 
     idx := table.size
 
     table.entity_to_idx[entity] = idx
     table.idx_to_entity[idx] = entity
-    table.comp_arr[idx] = component
+
+    component = cast(^T) table.idx_to_rawptr[idx]
+
+    component^ = table.comp_arr[idx]
     
     table.size += 1
 
-    return true
+    ok = true
+
+    return
 }
 
 // Returns true, if removed entity data from array. Otherwise returns false
-table_remove :: proc (table: ^Table($T), entity: Entity) -> bool {
+table_remove_component :: proc (table: ^Table($T), entity: Entity) -> bool {
 
     if !entity_is_valid(entity) do return false
     if !table_has_entity(table, entity) do return false
@@ -62,7 +73,8 @@ table_remove :: proc (table: ^Table($T), entity: Entity) -> bool {
     entity_to_remove_idx := table.entity_to_idx[entity]
     last_idx := table.size - 1
 
-    table.comp_arr[entity_to_remove_idx] = table.comp_arr[last_idx]
+    table.comp_arr[entity] = T {}
+    table.idx_to_rawptr[entity_to_remove_idx] = table.idx_to_rawptr[last_idx]
 
     last_entity := table.idx_to_entity[last_idx]
     table.entity_to_idx[last_entity] = entity_to_remove_idx
@@ -80,7 +92,7 @@ table_get_data :: proc (table: ^Table($T), entity: Entity) -> (component:^T, ok:
     if !entity_is_valid(entity) do return nil, false
     if !table_has_entity(table, entity) do return nil, false
 
-    return &table.comp_arr[table.entity_to_idx[entity]], true
+    return table.idx_to_rawptr[table.entity_to_idx[entity]], true
 }
 
 table_clear :: proc (table: ^Table($T)) {
