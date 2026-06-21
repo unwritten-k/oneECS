@@ -11,13 +11,29 @@ Table_Base :: struct {
     size: int,
 }
 
-Table :: struct($T: typeid) {
-    using base: Table_Base,
-    comp_arr: [MAX_ENTITIES]T,
+table_base_init :: proc (table: ^Table_Base, allocator:=context.allocator, loc:=#caller_location) {
+
+    table.allocator = allocator
+
+    table.entity_to_idx = make([]int,       MAX_ENTITIES, allocator, loc)
+    table.idx_to_entity = make([]Entity,    MAX_ENTITIES, allocator, loc)
+    table.idx_to_rawptr = make([]rawptr,    MAX_ENTITIES, allocator, loc)
+
 }
 
-table_init :: proc (table: ^Table($T)) {
-    table.type_info = type_info_of(typeid_of(type_of(table)))
+//////// Component table
+
+Table :: struct($T: typeid) {
+    using base: Table_Base,
+    comp_arr: []T,
+}
+
+table_init :: proc (table: ^Table($T), allocator:=context.allocator, loc:=#caller_location) {
+    table_base_init(&table.base, allocator, loc)
+
+    table.type_info = type_info_of(typeid_of(type_of(T)))
+
+    table.comp_arr = make([]T, MAX_ENTITIES, allocator, loc)
 }
 
 // Returns true, if inserted entity data in array. Otherwise returns false
