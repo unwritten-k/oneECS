@@ -16,12 +16,13 @@ table_test :: proc (_: ^testing.T) {
     e.table_init(&table)
     defer e.free_table(&table)
 
-    entity: e.Entity = 0
+    entity: e.Entity = 1023
     
     ok: bool
     component: ^Some_Data
 
     component, ok = e.table_add_component(&table, entity)
+    assert(ok == true, "Failed adding component")
 
     component.x = 23.5
     component.y = 14.15
@@ -29,6 +30,7 @@ table_test :: proc (_: ^testing.T) {
     log.info(component, table.size)
 
     ok = e.table_remove_component(&table, entity)
+    assert(ok == true, "Failed removing component")
 
     log.info(component, table.size)
 }
