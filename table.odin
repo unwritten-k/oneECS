@@ -169,7 +169,7 @@ table_clear :: proc (table: ^Table($T)) {
 // Returns true if entity is found. Otherwise false
 table_has_entity :: proc (table: ^Table($T), entity:Entity) -> bool {
 
-    return entity >= 0 && entity < i64(table.size)
+    return entity >= 0 && entity < i32(table.size)
 }
 
 free_table :: proc (table: ^Table($T)) {
