@@ -13,7 +13,7 @@ Entity_Manager :: struct {
 
 }
 
-entity_mng_init :: proc (mng: ^Entity_Manager) {
+entity_manager_init :: proc (mng: ^Entity_Manager) {
     mng.alive_entities = 0
 
     for i in 0..<i32(MAX_ENTITIES) {
