@@ -10,6 +10,8 @@ Table_Base :: struct {
 
     type_info: ^runtime.Type_Info,
 
+    capacity: int,
+
     entity_to_idx: []int,
     idx_to_entity: []Entity,
 
@@ -18,13 +20,14 @@ Table_Base :: struct {
     size: int,
 }
 
-table_base_init :: proc (table: ^Table_Base, allocator:=context.allocator, loc:=#caller_location) {
+table_base_init :: proc (table: ^Table_Base, table_capacity:=MAX_ENTITIES, allocator:=context.allocator, loc:=#caller_location) {
 
     table.allocator = allocator
 
-    table.entity_to_idx = make([]int,       MAX_ENTITIES, allocator, loc)
-    table.idx_to_entity = make([]Entity,    MAX_ENTITIES, allocator, loc)
-    table.idx_to_rawptr = make([]rawptr,    MAX_ENTITIES, allocator, loc)
+    table.capacity = table_capacity
+    table.entity_to_idx = make([]int,       table_capacity, allocator, loc)
+    table.idx_to_entity = make([]Entity,    table_capacity, allocator, loc)
+    table.idx_to_rawptr = make([]rawptr,    table_capacity, allocator, loc)
 
 }
 
@@ -102,13 +105,13 @@ Table :: struct($T: typeid) {
     comp_arr: []T,
 }
 
-table_init :: proc (table: ^Table($T), allocator:=context.allocator, loc:=#caller_location) {
+table_init :: proc (table: ^Table($T), table_capacity:=MAX_ENTITIES, allocator:=context.allocator, loc:=#caller_location) {
 
-    table_base_init(&table.base, allocator, loc)
+    table_base_init(&table.base, table_capacity, allocator, loc)
 
     table.type_info = type_info_of(typeid_of(T))
 
-    table.comp_arr = make([]T, MAX_ENTITIES, allocator, loc)
+    table.comp_arr = make([]T, table_capacity, allocator, loc)
 }
 
 // Returns true, if inserted entity data in array. Otherwise returns false
