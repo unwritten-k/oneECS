@@ -1,5 +1,6 @@
 package main
 
+import "core:mem"
 import "core:slice"
 import "base:runtime"
 
@@ -66,13 +67,8 @@ table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> bo
     entity_to_remove_idx := table.entity_to_idx[entity]
     last_idx := table.size - 1
 
-    // Size in bytes
-    type_size := table.type_info.size
-
-    bytes_start := int(entity) * type_size
-    bytes_end   := bytes_start + type_size
-
-    slice.fill(table.bytes_arr[bytes_start:bytes_end], 0)
+    bytes_end := entity_to_remove_idx + table.type_info.size
+    mem.zero(raw_data(table.bytes_arr[entity_to_remove_idx:bytes_end]), table.type_info.size)
 
     table.idx_to_rawptr[entity_to_remove_idx] = table.idx_to_rawptr[last_idx]
 
