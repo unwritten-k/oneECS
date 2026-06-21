@@ -92,9 +92,13 @@ table_bytes_clear :: proc (table: ^Table_Bytes) {
 }
 
 // Returns true if entity is found. Otherwise false
+//
+// **Note**: this function expects that given entity is valid
 table_bytes_has_entity :: proc (table: ^Table_Bytes, entity:Entity) -> bool {
-
-    return entity >= 0 && entity < i32(table.size)
+    if table.entity_to_idx[entity] < table.size && table.idx_to_entity[table.entity_to_idx[entity]] == entity {
+        return true
+    }
+    else do return false
 }
 
 free_table_bytes :: proc (table: ^Table_Bytes) {
@@ -167,9 +171,14 @@ table_clear :: proc (table: ^Table($T)) {
 }
 
 // Returns true if entity is found. Otherwise false
+//
+// **Note**: this function expects that given entity is valid
 table_has_entity :: proc (table: ^Table($T), entity:Entity) -> bool {
 
-    return entity >= 0 && entity < i32(table.size)
+    if table.entity_to_idx[entity] < table.size && table.idx_to_entity[table.entity_to_idx[entity]] == entity {
+        return true
+    }
+    else do return false
 }
 
 free_table :: proc (table: ^Table($T)) {
