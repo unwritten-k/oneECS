@@ -1,6 +1,6 @@
 package main
 
-MAX_ENTITIES :: #config(MAX_ENTITIES, 2048)
+MAX_ENTITIES :: #config(MAX_ENTITIES, 1024)
 
 ERROR_ENTITY :: -1
 
