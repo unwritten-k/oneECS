@@ -121,7 +121,7 @@ table_init :: proc (table: ^Table($T), table_capacity:=MAX_ENTITIES, allocator:=
 }
 
 // Returns true, if inserted entity data in array. Otherwise returns false
-table_add_component :: proc (table: ^Table($T), entity: Entity, loc:=#caller_location) -> (component: ^T, ok: bool) {
+table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^T, ok: bool) {
 
     if !entity_is_valid(entity) do return nil, false
     if table_has_entity(table, entity) do return nil, false
