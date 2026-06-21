@@ -4,11 +4,11 @@ MAX_ENTITIES :: #config(MAX_ENTITIES, 2048)
 
 ERROR_ENTITY :: -1
 
-Entity :: i64
+Entity :: i32
 
 Entity_Manager :: struct {
 
-    available_entities: [dynamic; MAX_ENTITIES]i64,
+    available_entities: [dynamic; MAX_ENTITIES]Entity,
     alive_entities: uint,
     
     signatures: [MAX_ENTITIES]Component_Signature,
@@ -18,7 +18,7 @@ Entity_Manager :: struct {
 entity_mng_init :: proc (mng: ^Entity_Manager) {
     mng.alive_entities = 0
 
-    for i in 0..<i64(MAX_ENTITIES) {
+    for i in 0..<i32(MAX_ENTITIES) {
         append(&mng.available_entities, i)
     }
 }

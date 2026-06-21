@@ -85,7 +85,7 @@ table_bytes_clear :: proc (table: ^Table_Bytes) {
 // Returns true if entity is found. Otherwise false
 table_bytes_has_entity :: proc (table: ^Table_Bytes, entity:Entity) -> bool {
 
-    return entity >= 0 && entity < i64(table.size)
+    return entity >= 0 && entity < i32(table.size)
 }
 
 free_table_bytes :: proc (table: ^Table_Bytes) {
