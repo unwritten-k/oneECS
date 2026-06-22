@@ -7,7 +7,6 @@ import "base:runtime"
 /////// Table base
 
 Table_Base :: struct {
-    using general_table: General_Table,
 
     allocator: runtime.Allocator,
 
