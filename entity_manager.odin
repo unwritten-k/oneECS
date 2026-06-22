@@ -1,5 +1,7 @@
 package main
 
+import "base:runtime"
+
 MAX_ENTITIES :: #config(MAX_ENTITIES, 1024)
 
 ERROR_ENTITY :: -1
@@ -7,18 +9,26 @@ ERROR_ENTITY :: -1
 Entity :: i32
 
 Entity_Manager :: struct {
+    allocator: runtime.Allocator,
 
-    available_entities: [dynamic; MAX_ENTITIES]Entity,
+    maximum_entities: uint,
+    available_entities: [dynamic]Entity,
     alive_entities: uint,
 
-    signatures: [MAX_ENTITIES]Component_Signature,
+    signatures: []Component_Signature,
 
 }
 
-entity_manager_init :: proc (mng: ^Entity_Manager) {
+entity_manager_init :: proc (mng: ^Entity_Manager, max_entities:=uint(MAX_ENTITIES), allocator:=context.allocator, loc:=#caller_location) {
     mng.alive_entities = 0
+    
+    mng.maximum_entities = max_entities
 
-    for i in 0..<i32(MAX_ENTITIES) {
+    mng.signatures = make([]Component_Signature, max_entities, allocator, loc)
+
+    mng.available_entities = make([dynamic]Entity, 0, max_entities, allocator, loc)
+
+    for i in 0..<Entity(max_entities) {
         append(&mng.available_entities, i)
     }
 }
@@ -38,6 +48,9 @@ entity_destroy :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
     if !entity_is_valid(ent) || len(mng.available_entities) == 0 do return false
 
     mng.alive_entities -= 1
+    // unlikely to happen
+    if (len(mng.available_entities)+1 < cap(mng.available_entities)) do return false
+    
     append(&mng.available_entities, ent)
 
     return true
