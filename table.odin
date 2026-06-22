@@ -22,7 +22,7 @@ Table_Base :: struct {
     size: int,
 }
 
-table_base_init :: proc (table: ^Table_Base, table_capacity:=MAX_ENTITIES, allocator:=context.allocator, loc:=#caller_location) {
+table_base_init :: proc (table: ^Table_Base, allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) {
 
     table.allocator = allocator
 
@@ -31,6 +31,10 @@ table_base_init :: proc (table: ^Table_Base, table_capacity:=MAX_ENTITIES, alloc
     table.idx_to_entity = make([]Entity,    table_capacity, allocator, loc)
     table.idx_to_rawptr = make([]rawptr,    table_capacity, allocator, loc)
 
+}
+
+table_base_entity_is_valid :: proc (table: ^Table_Base, entity: Entity) -> bool {
+    return entity >= 0 && entity < i32(table.capacity)
 }
 
 free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) {
@@ -49,8 +53,8 @@ Table_Bytes :: struct {
     bytes_arr: []byte
 }
 
-table_bytes_init :: proc (table: ^Table_Bytes, type_info: ^runtime.Type_Info, table_capacity:=MAX_ENTITIES, allocator: runtime.Allocator, loc:=#caller_location) {
-    table_base_init(&table.base, table_capacity, allocator, loc)
+table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, type_info: ^runtime.Type_Info, table_capacity:=MAX_ENTITIES, loc:=#caller_location) {
+    table_base_init(&table.base, allocator, table_capacity, loc)
     table.type_info = type_info
 
     table.bytes_arr = make ([]byte, type_info.size*table_capacity, allocator, loc)
@@ -62,7 +66,7 @@ table_bytes_init :: proc (table: ^Table_Bytes, type_info: ^runtime.Type_Info, ta
 // becomes invalid after removal 
 table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> bool {
 
-    if !entity_is_valid(entity) do return false
+    if !table_base_entity_is_valid((^Table_Base)(table), entity) do return false
     if !table_bytes_has_entity(table, entity) do return false
     
     entity_to_remove_idx := table.entity_to_idx[entity]
@@ -112,9 +116,9 @@ Table :: struct($T: typeid) {
     comp_arr: []T,
 }
 
-table_init :: proc (table: ^Table($T), table_capacity:=MAX_ENTITIES, allocator:=context.allocator, loc:=#caller_location) {
+table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) {
 
-    table_base_init(&table.base, table_capacity, allocator, loc)
+    table_base_init(&table.base, allocator, table_capacity, loc)
 
     table.type_info = type_info_of(typeid_of(T))
 
@@ -124,7 +128,7 @@ table_init :: proc (table: ^Table($T), table_capacity:=MAX_ENTITIES, allocator:=
 // Returns true, if inserted entity data in array. Otherwise returns false
 table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^T, ok: bool) {
 
-    if !entity_is_valid(entity) do return nil, false
+    if !table_base_entity_is_valid((^Table_Base)(table), entity) do return nil, false
     if table_has_entity(table, entity) do return nil, false
 
     idx := table.size
@@ -156,7 +160,7 @@ table_remove_component :: proc (table: ^Table($T), entity: Entity) -> bool {
 // In case of failure, returns nil and false
 table_get_component :: proc (table: ^Table($T), entity: Entity) -> (component:^T, ok:bool) {
 
-    if !entity_is_valid(entity) do return nil, false
+    if !table_base_entity_is_valid((^Table_Base)(table), entity) do return nil, false
     if !table_has_entity(table, entity) do return nil, false
 
     return table.idx_to_rawptr[table.entity_to_idx[entity]], true
