@@ -11,7 +11,7 @@ Entity :: i32
 Entity_Manager :: struct {
     allocator: runtime.Allocator,
 
-    maximum_entities: uint,
+    maximum_entities: i32,
     available_entities: [dynamic]Entity,
     alive_entities: uint,
 
@@ -19,7 +19,7 @@ Entity_Manager :: struct {
 
 }
 
-entity_manager_init :: proc (mng: ^Entity_Manager, max_entities:=uint(MAX_ENTITIES), allocator:=context.allocator, loc:=#caller_location) {
+entity_manager_init :: proc (mng: ^Entity_Manager, max_entities:=i32(MAX_ENTITIES), allocator:=context.allocator, loc:=#caller_location) {
     mng.alive_entities = 0
     
     mng.maximum_entities = max_entities
@@ -45,7 +45,7 @@ entity_create :: proc (mng: ^Entity_Manager) -> Entity {
 
 entity_destroy :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
 
-    if !entity_is_valid(ent) || len(mng.available_entities) == 0 do return false
+    if !entity_is_valid(mng, ent) || len(mng.available_entities) == 0 do return false
 
     mng.alive_entities -= 1
     // unlikely to happen
@@ -58,7 +58,7 @@ entity_destroy :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
 
 entity_set_signature :: proc (mng: ^Entity_Manager, ent: Entity, signature: Component_Signature) -> bool {
 
-    if !entity_is_valid(ent) do return false
+    if !entity_is_valid(mng, ent) do return false
 
     mng.signatures[ent] = signature
 
@@ -67,12 +67,12 @@ entity_set_signature :: proc (mng: ^Entity_Manager, ent: Entity, signature: Comp
 
 entity_get_signature :: proc (mng: ^Entity_Manager, ent: Entity) -> Component_Signature {
     
-    if !entity_is_valid(ent) do return nil
+    if !entity_is_valid(mng, ent) do return nil
 
     return mng.signatures[ent]
 }
 
-entity_is_valid :: proc (ent: Entity) -> bool {
-    return ent >= 0 && ent < MAX_ENTITIES
+entity_is_valid :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
+    return ent >= 0 && ent < mng.maximum_entities
 }
 
