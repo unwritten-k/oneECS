@@ -56,20 +56,31 @@ entity_destroy :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
     return true
 }
 
-entity_set_signature :: proc (mng: ^Entity_Manager, ent: Entity, signature: Component_Signature) -> bool {
-
-    if !entity_is_valid(mng, ent) do return false
-
-    mng.signatures[ent] = signature
-
-    return true
-}
-
 entity_get_signature :: proc (mng: ^Entity_Manager, ent: Entity) -> Component_Signature {
     
     if !entity_is_valid(mng, ent) do return nil
 
     return mng.signatures[ent]
+}
+
+entity_manager_sign_add_component :: proc (mng: ^Entity_Manager, ent: Entity, id: Component_Type) -> bool {
+    if !entity_is_valid(mng, ent) do return false
+
+    mng.signatures[ent] += {id}
+
+    return true
+}
+
+entity_manager_sign_remove_component :: proc(mng: ^Entity_Manager, ent: Entity, id: Component_Type) -> bool {
+    if !entity_is_valid(mng, ent) do return false
+
+    mng.signatures[ent] -= {id}
+
+    return true
+}
+
+entity_manager_sign_has_component :: #force_inline proc "contextless" (mng: ^Entity_Manager, ent: Entity, id: Component_Type) -> bool {
+    return id in mng.signatures[ent]
 }
 
 entity_is_valid :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
