@@ -13,7 +13,7 @@ Some_Data :: struct {
 table_test :: proc (_: ^testing.T) {
 
     table : e.Table (Some_Data)
-    e.table_init(&table)
+    e.table_init(&table, context.allocator)
     defer e.free_table(&table)
 
     entity: e.Entity = 1023
