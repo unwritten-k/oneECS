@@ -2,7 +2,7 @@ package tests
 
 import "core:log"
 import "core:testing"
-import e ".."
+import ecs ".."
 
 Some_Data :: struct {
     x: f32,
@@ -12,25 +12,25 @@ Some_Data :: struct {
 @test
 table_test :: proc (_: ^testing.T) {
 
-    table : e.Table (Some_Data)
-    e.table_init(&table, context.allocator)
-    defer e.free_table(&table)
+    table : ecs.Table (Some_Data)
+    ecs.table_init(&table, context.allocator)
+    defer ecs.free_table(&table)
 
-    entity: e.Entity = 1023
+    entity: ecs.Entity = 1023
     
-    ok: bool
+    err: ecs.Error
     component: ^Some_Data
 
-    component, ok = e.table_add_component(&table, entity)
-    assert(ok == true, "Failed adding component")
+    component, err = ecs.table_add_component(&table, entity)
+    assert(err == ecs.ERROR_NONE, "Failed adding component")
 
     component.x = 23.5
     component.y = 14.15
     
     log.info(component, table.size)
 
-    ok = e.table_remove_component(&table, entity)
-    assert(ok == true, "Failed removing component")
+    err = ecs.table_remove_component(&table, entity)
+    assert(err == ecs.ERROR_NONE, "Failed removing component")
 
     log.info(component, table.size)
 }
