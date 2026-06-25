@@ -1,6 +1,5 @@
 package main
 
-import "core:log"
 import "core:mem"
 import "core:slice"
 import "base:runtime"
@@ -154,7 +153,7 @@ table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^
     
     table.size += 1
 
-    return ERROR_NONE
+    return
 }
 
 // Returns true, if removed entity data from array. Otherwise returns false
