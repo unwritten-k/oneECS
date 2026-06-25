@@ -1,14 +1,17 @@
 package main
 
+import "core:fmt"
 import "base:runtime"
 
 Entity_Error :: enum {
+    None=0,
     Invalid_Entity,
     No_Available_Entities,
     Too_Much_Entites
 }
 
 Table_Error :: enum {
+    None=0,
     Already_Has_Entity,
     Entity_Not_Found,
 }
