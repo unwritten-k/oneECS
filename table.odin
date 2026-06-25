@@ -1,5 +1,6 @@
 package main
 
+import "core:log"
 import "core:mem"
 import "core:slice"
 import "base:runtime"
@@ -22,20 +23,15 @@ Table_Base :: struct {
     size: int,
 }
 
-table_base_init :: proc (table: ^Table_Base, allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> (err: Error) {
+table_base_init :: proc (table: ^Table_Base, allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> Error {
 
     table.allocator = allocator
 
     table.capacity = table_capacity
 
-    table.entity_to_idx, err = make([]int,       table_capacity, allocator, loc)
-    if err != .None do return
-
-    table.idx_to_entity, err = make([]Entity,    table_capacity, allocator, loc)
-    if err != .None do return
-
-    table.idx_to_rawptr, err = make([]rawptr,    table_capacity, allocator, loc)
-    if err != .None do return
+    table.entity_to_idx = make([]int,       table_capacity, allocator, loc) or_return
+    table.idx_to_entity = make([]Entity,    table_capacity, allocator, loc) or_return
+    table.idx_to_rawptr = make([]rawptr,    table_capacity, allocator, loc) or_return
 
     return ERROR_NONE
 }
@@ -44,18 +40,15 @@ table_base_entity_is_valid :: proc (table: ^Table_Base, entity: Entity) -> bool 
     return entity >= 0 && entity < i32(table.capacity)
 }
 
-free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) -> (err: Error) {
+free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) -> Error {
 
-    err = delete(table.entity_to_idx, table.allocator, loc)
-    if err != .None do return
-    err = delete(table.idx_to_entity, table.allocator, loc)
-    if err != .None do return
-    err = delete(table.idx_to_rawptr, table.allocator, loc)
-    if err != .None do return
+    delete(table.entity_to_idx, table.allocator, loc) or_return
+    delete(table.idx_to_entity, table.allocator, loc) or_return
+    delete(table.idx_to_rawptr, table.allocator, loc) or_return
 
     table.size = -1
 
-    return
+    return ERROR_NONE
 }
 
 //////// Bytes table
@@ -66,13 +59,11 @@ Table_Bytes :: struct {
 }
 
 table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, type_info: ^runtime.Type_Info, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> (err:Error) {
-    err = table_base_init(&table.base, allocator, table_capacity, loc)
-    if err != .None do return
+    table_base_init(&table.base, allocator, table_capacity, loc) or_return
 
     table.type_info = type_info
 
-    table.bytes_arr, err = make ([]byte, type_info.size*table_capacity, allocator, loc)
-    if err != .None do return
+    table.bytes_arr = make ([]byte, type_info.size*table_capacity, allocator, loc) or_return
 
     return
 }
@@ -119,13 +110,11 @@ table_bytes_has_entity :: proc (table: ^Table_Bytes, entity:Entity) -> bool {
     else do return false
 }
 
-free_table_bytes :: proc (table: ^Table_Bytes, loc:=#caller_location) -> (err: Error) {
+free_table_bytes :: proc (table: ^Table_Bytes, loc:=#caller_location) -> Error {
     
-    err = free_table_base(&table.base, loc)
-    if err != .None do return
+    free_table_base(&table.base, loc) or_return
 
-    err = delete(table.bytes_arr, table.allocator, loc)
-    if err != .None do return
+    delete(table.bytes_arr, table.allocator, loc) or_return
 
     return ERROR_NONE
 }
@@ -137,18 +126,15 @@ Table :: struct($T: typeid) {
     comp_arr: []T,
 }
 
-table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> (err: Error) {
+table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> Error {
 
-    err = table_base_init(&table.base, allocator, table_capacity, loc)
-    if err != .None do return
+    table_base_init(&table.base, allocator, table_capacity, loc) or_return
 
     table.type_info = type_info_of(typeid_of(T))
 
-    table.comp_arr, err = make([]T, table_capacity, allocator, loc)
-    if err != .None do return
+    table.comp_arr = make([]T, table_capacity, allocator, loc) or_return
 
-    err = ERROR_NONE
-    return
+    return ERROR_NONE
 }
 
 // Returns true, if inserted entity data in array. Otherwise returns false
@@ -168,8 +154,7 @@ table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^
     
     table.size += 1
 
-    err = ERROR_NONE
-    return
+    return ERROR_NONE
 }
 
 // Returns true, if removed entity data from array. Otherwise returns false
@@ -207,13 +192,11 @@ table_has_entity :: proc (table: ^Table($T), entity:Entity) -> bool {
     else do return false
 }
 
-free_table :: proc (table: ^Table($T), loc:=#caller_location) -> (err: Error) {
+free_table :: proc (table: ^Table($T), loc:=#caller_location) -> Error {
 
-    err = free_table_base(&table.base, loc)
-    if err != .None do return
-
-    err = delete(table.comp_arr, table.allocator, loc)
-    if err != .None do return
+    free_table_base(&table.base, loc) or_return
+    
+    delete(table.comp_arr, table.allocator, loc) or_return
 
     return ERROR_NONE
 }
