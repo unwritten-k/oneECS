@@ -88,7 +88,9 @@ table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> Er
     last_idx := table.size - 1
 
     bytes_end := entity_to_remove_idx + table.type_info.size
-    mem.zero(raw_data(table.bytes[entity_to_remove_idx:bytes_end]), table.type_info.size)
+    #no_bounds_check {
+        mem.zero(raw_data(table.bytes[entity_to_remove_idx:bytes_end]), table.type_info.size)
+    }
 
     table.idx_to_rawptr[entity_to_remove_idx] = table.idx_to_rawptr[last_idx]
 
