@@ -51,7 +51,7 @@ free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) -> Error {
     delete(table.idx_to_entity, table.allocator, loc) or_return
     delete(table.idx_to_rawptr, table.allocator, loc) or_return
 
-    table.size = -1
+    table.size = 0
 
     return ERROR_NONE
 }
@@ -129,8 +129,6 @@ free_table_bytes :: proc (table: ^Table_Bytes, loc:=#caller_location) -> Error {
     free_table_base(&table.base, loc) or_return
 
     delete(table.bytes, table.allocator, loc) or_return
-
-    table_bytes_clear(table)
 
     return ERROR_NONE
 }
