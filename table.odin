@@ -11,6 +11,7 @@ Table_Base :: struct {
 
     type_info: ^runtime.Type_Info,
 
+    max_entities: int,
     capacity: int,
 
     entity_to_idx: []int,
@@ -21,11 +22,17 @@ Table_Base :: struct {
     size: int,
 }
 
-table_base_init :: proc (table: ^Table_Base, allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> Error {
+table_base_init :: proc (
+    table: ^Table_Base, 
+    allocator: runtime.Allocator, 
+    max_entities:=MAX_ENTITIES, 
+    table_capacity:=MAX_ENTITIES, 
+    loc:=#caller_location) -> Error {
 
     table.allocator = allocator
 
     table.capacity = table_capacity
+    table.max_entities = max_entities
 
     table.entity_to_idx = make([]int,       table_capacity, allocator, loc) or_return
     table.idx_to_entity = make([]Entity,    table_capacity, allocator, loc) or_return
@@ -35,7 +42,7 @@ table_base_init :: proc (table: ^Table_Base, allocator: runtime.Allocator, table
 }
 
 table_base_entity_is_valid :: proc (table: ^Table_Base, entity: Entity) -> bool {
-    return entity >= 0 && entity < i32(table.capacity)
+    return entity >= 0 && entity < i32(table.max_entities)
 }
 
 free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) -> Error {
@@ -56,8 +63,8 @@ Table_Bytes :: struct {
     bytes_arr: []byte
 }
 
-table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, type_info: ^runtime.Type_Info, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> (err:Error) {
-    table_base_init(&table.base, allocator, table_capacity, loc) or_return
+table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, type_info: ^runtime.Type_Info, max_entities:=MAX_ENTITIES, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> (err:Error) {
+    table_base_init(&table.base, allocator, max_entities, table_capacity, loc) or_return
 
     table.type_info = type_info
 
@@ -135,9 +142,9 @@ Table :: struct($T: typeid) {
     comp_arr: []T,
 }
 
-table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> Error {
+table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, max_entities:=MAX_ENTITIES, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> Error {
 
-    table_base_init(&table.base, allocator, table_capacity, loc) or_return
+    table_base_init(&table.base, allocator, max_entities, table_capacity, loc) or_return
 
     table.type_info = type_info_of(typeid_of(T))
 
