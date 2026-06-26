@@ -60,7 +60,7 @@ free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) -> Error {
 
 Table_Bytes :: struct {
     using base: Table_Base,
-    bytes_arr: []byte
+    bytes: []byte
 }
 
 table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, type_info: ^runtime.Type_Info, max_entities:=MAX_ENTITIES, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> (err:Error) {
@@ -68,7 +68,7 @@ table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, typ
 
     table.type_info = type_info
 
-    table.bytes_arr = make ([]byte, type_info.size*table_capacity, allocator, loc) or_return
+    table.bytes = make ([]byte, type_info.size*table_capacity, allocator, loc) or_return
 
     table_bytes_clear(table)
 
@@ -88,7 +88,7 @@ table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> Er
     last_idx := table.size - 1
 
     bytes_end := entity_to_remove_idx + table.type_info.size
-    mem.zero(raw_data(table.bytes_arr[entity_to_remove_idx:bytes_end]), table.type_info.size)
+    mem.zero(raw_data(table.bytes[entity_to_remove_idx:bytes_end]), table.type_info.size)
 
     table.idx_to_rawptr[entity_to_remove_idx] = table.idx_to_rawptr[last_idx]
 
@@ -98,7 +98,7 @@ table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> Er
 
     table.size -= 1
 
-    raw := (^runtime.Raw_Slice)(&table.bytes_arr)
+    raw := (^runtime.Raw_Slice)(&table.bytes)
     raw.len -= 1
 
     return ERROR_NONE
@@ -106,7 +106,7 @@ table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> Er
 
 table_bytes_clear :: proc (table: ^Table_Bytes) {
 
-    raw := (^runtime.Raw_Slice)(&table.bytes_arr)
+    raw := (^runtime.Raw_Slice)(&table.bytes)
     mem.zero(raw.data, raw.len)
 
     raw.len = 0
@@ -128,7 +128,7 @@ free_table_bytes :: proc (table: ^Table_Bytes, loc:=#caller_location) -> Error {
     
     free_table_base(&table.base, loc) or_return
 
-    delete(table.bytes_arr, table.allocator, loc) or_return
+    delete(table.bytes, table.allocator, loc) or_return
 
     table_bytes_clear(table)
 
@@ -139,7 +139,7 @@ free_table_bytes :: proc (table: ^Table_Bytes, loc:=#caller_location) -> Error {
 
 Table :: struct($T: typeid) {
     using base: Table_Base,
-    comp_arr: []T,
+    components: []T,
 }
 
 table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, max_entities:=MAX_ENTITIES, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> Error {
@@ -148,7 +148,7 @@ table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, max_entitie
 
     table.type_info = type_info_of(typeid_of(T))
 
-    table.comp_arr = make([]T, table_capacity, allocator, loc) or_return
+    table.components = make([]T, table_capacity, allocator, loc) or_return
 
     table_clear(table)
 
@@ -162,7 +162,7 @@ table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^
     if table_has_entity(table, entity) do return nil, .Already_Has_Entity
     if table.size >= table.capacity do return nil, .Reached_Component_Limit
 
-    raw := (^runtime.Raw_Slice)(&table.comp_arr)
+    raw := (^runtime.Raw_Slice)(&table.components)
 
     idx := raw.len
 
@@ -170,7 +170,7 @@ table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^
     table.idx_to_entity[idx] = entity
 
     #no_bounds_check {
-        component = &table.comp_arr[idx]
+        component = &table.components[idx]
     }
     
     table.idx_to_rawptr[idx] = component
@@ -220,7 +220,7 @@ free_table :: proc (table: ^Table($T), loc:=#caller_location) -> Error {
 
     free_table_base(&table.base, loc) or_return
     
-    delete(table.comp_arr, table.allocator, loc) or_return
+    delete(table.components, table.allocator, loc) or_return
 
     return ERROR_NONE
 }
