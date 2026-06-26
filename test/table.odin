@@ -102,7 +102,7 @@ table_iter :: proc (_: ^testing.T) {
     }
 
     // iterate over table
-    for &comp in table.comp_arr {
+    for &comp in table.components {
         
         log.info("Iterating over component", comp)
     }
