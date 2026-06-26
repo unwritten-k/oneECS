@@ -201,6 +201,10 @@ table_get_component :: proc (table: ^Table($T), entity: Entity) -> (component:^T
     return
 }
 
+table_get_entity :: proc (table: ^Table($T), component: ^T) -> (entity: Entity, err: Error) {
+    unimplemented_contextless("This function is not implemented __yet__")
+}
+
 table_clear :: proc (table: ^Table($T)) {
 
     table_bytes_clear((^Table_Bytes)(table))
