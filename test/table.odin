@@ -9,16 +9,23 @@ Some_Data :: struct {
     y: f32
 }
 
+Some_Other_Data :: struct {
+    name: string,
+    group_n: int,
+}
+
 @test
 table_test :: proc (_: ^testing.T) {
 
+    err: ecs.Error
+
     table : ecs.Table (Some_Data)
-    ecs.table_init(&table, context.allocator)
+    err = ecs.table_init(&table, context.allocator)
+    assert(err == ecs.ERROR_NONE, "Could not init table")
     defer ecs.free_table(&table)
 
     entity: ecs.Entity = 1023
-    
-    err: ecs.Error
+
     component: ^Some_Data
 
     component, err = ecs.table_add_component(&table, entity)
@@ -33,4 +40,43 @@ table_test :: proc (_: ^testing.T) {
     assert(err == ecs.ERROR_NONE, "Failed removing component")
 
     log.info(component, table.size)
+}
+
+@test
+table_test2 :: proc (_: ^testing.T) {
+
+    tables := make([]^ecs.Table_Base, ecs.MAX_COMPONENTS)
+
+    table : ecs.Table (Some_Data)
+    err := ecs.table_init(&table, context.allocator)
+    assert(err == ecs.ERROR_NONE, ecs.error_to_str(err))
+    defer ecs.free_table(&table)
+
+    tables[0] = &table
+
+    other_table : ecs.Table (Some_Other_Data)
+    err = ecs.table_init(&other_table, context.allocator)
+    assert(err == ecs.ERROR_NONE, ecs.error_to_str(err))
+    defer ecs.free_table(&other_table)
+    
+    tables[1] = &other_table
+
+    
+    table_ptr := (^ecs.Table(Some_Data))(tables[0])
+
+    comp: ^Some_Data
+    comp, err = ecs.table_add_component(table_ptr, 0)
+    assert(err == ecs.ERROR_NONE, ecs.error_to_str(err))
+
+    comp.x = 0
+    comp.y = 12
+
+    table_ptr2 := (^ecs.Table(Some_Other_Data))(tables[1])
+    
+    comp2 : ^Some_Other_Data
+    comp2, err = ecs.table_add_component(table_ptr2, 1)
+    assert(err == ecs.ERROR_NONE, ecs.error_to_str(err))
+
+    comp2.group_n = 123224
+    comp2.name = "Name"
 }
