@@ -1,7 +1,6 @@
 package main
 
 import "core:mem"
-import "core:slice"
 import "base:runtime"
 
 /////// Table base
@@ -64,6 +63,8 @@ table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, typ
 
     table.bytes_arr = make ([]byte, type_info.size*table_capacity, allocator, loc) or_return
 
+    table_bytes_clear(table)
+
     return
 }
 
@@ -73,7 +74,7 @@ table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, typ
 // becomes invalid after removal 
 table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> Error {
 
-    if !table_base_entity_is_valid((^Table_Base)(table), entity) do return .Invalid_Entity
+    if !table_base_entity_is_valid(&table.base, entity) do return .Invalid_Entity
     if !table_bytes_has_entity(table, entity) do return .Entity_Not_Found
     
     entity_to_remove_idx := table.entity_to_idx[entity]
@@ -90,12 +91,19 @@ table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> Er
 
     table.size -= 1
 
+    raw := (^runtime.Raw_Slice)(&table.bytes_arr)
+    raw.len -= 1
+
     return ERROR_NONE
 }
 
 table_bytes_clear :: proc (table: ^Table_Bytes) {
 
-    slice.fill(table.bytes_arr, 0)
+    raw := (^runtime.Raw_Slice)(&table.bytes_arr)
+    mem.zero(raw.data, raw.len)
+
+    raw.len = 0
+
     table.size = 0
 }
 
@@ -115,6 +123,8 @@ free_table_bytes :: proc (table: ^Table_Bytes, loc:=#caller_location) -> Error {
 
     delete(table.bytes_arr, table.allocator, loc) or_return
 
+    table_bytes_clear(table)
+
     return ERROR_NONE
 }
 
@@ -133,24 +143,31 @@ table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, table_capac
 
     table.comp_arr = make([]T, table_capacity, allocator, loc) or_return
 
+    table_clear(table)
+
     return ERROR_NONE
 }
 
 // Returns true, if inserted entity data in array. Otherwise returns false
 table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^T, err: Error) {
 
-    if !table_base_entity_is_valid((^Table_Base)(table), entity) do return nil, .Invalid_Entity
+    if !table_base_entity_is_valid(&table.base, entity) do return nil, .Invalid_Entity
     if table_has_entity(table, entity) do return nil, .Already_Has_Entity
 
-    idx := table.size
+    raw := (^runtime.Raw_Slice)(&table.comp_arr)
+
+    idx := raw.len
 
     table.entity_to_idx[entity] = idx
     table.idx_to_entity[idx] = entity
 
-    component = &table.comp_arr[idx]
+    #no_bounds_check {
+        component = &table.comp_arr[idx]
+    }
     
     table.idx_to_rawptr[idx] = component
     
+    raw.len += 1
     table.size += 1
 
     return
@@ -169,7 +186,7 @@ table_remove_component :: proc (table: ^Table($T), entity: Entity) -> Error {
 // In case of failure, returns nil and false
 table_get_component :: proc (table: ^Table($T), entity: Entity) -> (component:^T, err: Error) {
 
-    if !table_base_entity_is_valid((^Table_Base)(table), entity) do return nil, .Invalid_Entity
+    if !table_base_entity_is_valid(&table.base, entity) do return nil, .Invalid_Entity
     if !table_has_entity(table, entity) do return nil, .Entity_Not_Found
 
     return table.idx_to_rawptr[table.entity_to_idx[entity]], true

@@ -80,3 +80,30 @@ table_test2 :: proc (_: ^testing.T) {
     comp2.group_n = 123224
     comp2.name = "Name"
 }
+
+@test
+table_iter :: proc (_: ^testing.T) {
+    err: ecs.Error
+
+    table : ecs.Table (Some_Data)
+    err = ecs.table_init(&table, context.allocator)
+    assert(err == ecs.ERROR_NONE, ecs.error_to_str(err))
+    defer ecs.free_table(&table)
+
+    // add component for 10 entities (from 0 to 9)
+    for entity in 0..<ecs.Entity(10) {
+        comp: ^Some_Data
+        comp, err = ecs.table_add_component(&table, entity)
+        assert(err == ecs.ERROR_NONE, ecs.error_to_str(err))
+
+        // change the data
+        comp.x = cast(f32) entity
+        comp.y = cast(f32) entity / 2
+    }
+
+    // iterate over table
+    for &comp in table.comp_arr {
+        
+        log.info("Iterating over component", comp)
+    }
+}
