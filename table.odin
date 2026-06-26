@@ -197,7 +197,8 @@ table_get_component :: proc (table: ^Table($T), entity: Entity) -> (component:^T
     if !table_base_entity_is_valid(&table.base, entity) do return nil, .Invalid_Entity
     if !table_has_entity(table, entity) do return nil, .Entity_Not_Found
 
-    return table.idx_to_rawptr[table.entity_to_idx[entity]], true
+    component = cast(^T) table.idx_to_rawptr[table.entity_to_idx[entity]]
+    return
 }
 
 table_clear :: proc (table: ^Table($T)) {
