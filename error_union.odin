@@ -14,6 +14,7 @@ Table_Error :: enum {
     None=0,
     Already_Has_Entity,
     Entity_Not_Found,
+    Reached_Component_Limit,
 }
 
 Error :: union {

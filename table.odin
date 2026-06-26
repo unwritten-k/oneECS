@@ -153,6 +153,7 @@ table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^
 
     if !table_base_entity_is_valid(&table.base, entity) do return nil, .Invalid_Entity
     if table_has_entity(table, entity) do return nil, .Already_Has_Entity
+    if table.size >= table.capacity do return nil, .Reached_Component_Limit
 
     raw := (^runtime.Raw_Slice)(&table.comp_arr)
 
