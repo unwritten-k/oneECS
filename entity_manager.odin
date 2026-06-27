@@ -83,12 +83,14 @@ entity_manager_sign_has_component :: #force_inline proc "contextless" (mng: ^Ent
     return id in mng.signatures[ent]
 }
 
-free_entity_manager :: proc (mng: ^Entity_Manager, loc:=#caller_location) {
-    delete(mng.available_entities, loc)
-    delete(mng.signatures, mng.allocator, loc)
+free_entity_manager :: proc (mng: ^Entity_Manager, loc:=#caller_location) -> Error {
+    delete(mng.available_entities, loc) or_return
+    delete(mng.signatures, mng.allocator, loc) or_return
 
     mng.alive_entities = 0
     mng.biggest_entity = 0
+
+    return ERROR_NONE
 }
 
 entity_is_valid :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
