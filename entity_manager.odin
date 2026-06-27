@@ -2,12 +2,6 @@ package main
 
 import "base:runtime"
 
-DEFAULT_MAX_ENTITIES :: #config(DEFAULT_MAX_ENTITIES, 1024)
-
-ERROR_ENTITY :: -1
-
-Entity :: i32
-
 Entity_Manager :: struct {
     allocator: runtime.Allocator,
 

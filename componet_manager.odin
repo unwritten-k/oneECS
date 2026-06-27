@@ -2,12 +2,6 @@ package main
 
 import "base:runtime"
 
-DEFAULT_MAX_COMPONENTS :: #config(DEFAULT_MAX_COMPONENTS, 32)
-
-Component_Type :: int
-
-Component_Signature :: bit_set[0..<DEFAULT_MAX_COMPONENTS; u32]
-
 Component_Manager :: struct {
     allocator: runtime.Allocator,
 
