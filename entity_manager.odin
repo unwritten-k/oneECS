@@ -33,7 +33,7 @@ entity_manager_init :: proc (mng: ^Entity_Manager, allocator: runtime.Allocator,
     return ERROR_NONE
 }
 
-entity_create :: proc (mng: ^Entity_Manager) -> (ent: Entity, err: Error) {
+entity_manager_create_entity :: proc (mng: ^Entity_Manager) -> (ent: Entity, err: Error) {
 
     if len(mng.available_entities) == 0 do return ERROR_ENTITY, .No_Available_Entities
 
@@ -43,9 +43,9 @@ entity_create :: proc (mng: ^Entity_Manager) -> (ent: Entity, err: Error) {
     return
 }
 
-entity_destroy :: proc (mng: ^Entity_Manager, ent: Entity) -> Error {
+entity_manager_destroy_entity :: proc (mng: ^Entity_Manager, ent: Entity) -> Error {
 
-    if !entity_is_valid(mng, ent) || len(mng.available_entities) == 0 do return .Invalid_Entity
+    if !entity_manager_entity_is_valid(mng, ent) || len(mng.available_entities) == 0 do return .Invalid_Entity
 
     mng.alive_entities -= 1
     // unlikely to happen
@@ -56,15 +56,15 @@ entity_destroy :: proc (mng: ^Entity_Manager, ent: Entity) -> Error {
     return ERROR_NONE
 }
 
-entity_get_signature :: proc (mng: ^Entity_Manager, ent: Entity) -> Component_Signature {
+entity_manager_get_signature :: proc (mng: ^Entity_Manager, ent: Entity) -> Component_Signature {
     
-    if !entity_is_valid(mng, ent) do return nil
+    if !entity_manager_entity_is_valid(mng, ent) do return nil
 
     return mng.signatures[ent]
 }
 
 entity_manager_sign_add_component :: proc (mng: ^Entity_Manager, ent: Entity, id: Component_Type) -> Error {
-    if !entity_is_valid(mng, ent) do return .Invalid_Entity
+    if !entity_manager_entity_is_valid(mng, ent) do return .Invalid_Entity
 
     mng.signatures[ent] += {id}
 
@@ -72,7 +72,7 @@ entity_manager_sign_add_component :: proc (mng: ^Entity_Manager, ent: Entity, id
 }
 
 entity_manager_sign_remove_component :: proc(mng: ^Entity_Manager, ent: Entity, id: Component_Type) -> Error {
-    if !entity_is_valid(mng, ent) do return .Invalid_Entity
+    if !entity_manager_entity_is_valid(mng, ent) do return .Invalid_Entity
 
     mng.signatures[ent] -= {id}
 
@@ -93,7 +93,7 @@ free_entity_manager :: proc (mng: ^Entity_Manager, loc:=#caller_location) -> Err
     return ERROR_NONE
 }
 
-entity_is_valid :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
+entity_manager_entity_is_valid :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
     return ent >= 0 && ent < mng.biggest_entity
 }
 
