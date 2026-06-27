@@ -26,8 +26,8 @@ Table_Base :: struct {
 table_base_init :: proc (
     table: ^Table_Base, 
     allocator: runtime.Allocator, 
-    max_entities:=MAX_ENTITIES, 
-    table_capacity:=MAX_ENTITIES, 
+    max_entities:=DEFAULT_MAX_ENTITIES, 
+    table_capacity:=DEFAULT_MAX_ENTITIES, 
     loc:=#caller_location) -> Error {
 
     table.allocator = allocator
@@ -68,7 +68,7 @@ Table_Bytes :: struct {
     bytes: []byte
 }
 
-table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, type_info: ^runtime.Type_Info, max_entities:=MAX_ENTITIES, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> (err:Error) {
+table_bytes_init :: proc (table: ^Table_Bytes, allocator: runtime.Allocator, type_info: ^runtime.Type_Info, max_entities:=DEFAULT_MAX_ENTITIES, table_capacity:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> (err:Error) {
     table_base_init(&table.base, allocator, max_entities, table_capacity, loc) or_return
 
     table.type_info = type_info
@@ -148,7 +148,7 @@ Table :: struct($T: typeid) {
     components: []T,
 }
 
-table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, max_entities:=MAX_ENTITIES, table_capacity:=MAX_ENTITIES, loc:=#caller_location) -> Error {
+table_init :: proc (table: ^Table($T), allocator: runtime.Allocator, max_entities:=DEFAULT_MAX_ENTITIES, table_capacity:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> Error {
 
     table_base_init(&table.base, allocator, max_entities, table_capacity, loc) or_return
 

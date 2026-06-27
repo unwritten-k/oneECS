@@ -2,7 +2,7 @@ package main
 
 import "base:runtime"
 
-MAX_ENTITIES :: #config(MAX_ENTITIES, 1024)
+DEFAULT_MAX_ENTITIES :: #config(DEFAULT_MAX_ENTITIES, 1024)
 
 ERROR_ENTITY :: -1
 
@@ -19,7 +19,7 @@ Entity_Manager :: struct {
 
 }
 
-entity_manager_init :: proc (mng: ^Entity_Manager, allocator: runtime.Allocator, max_entities:=i32(MAX_ENTITIES), loc:=#caller_location) -> Error {
+entity_manager_init :: proc (mng: ^Entity_Manager, allocator: runtime.Allocator, max_entities:=i32(DEFAULT_MAX_ENTITIES), loc:=#caller_location) -> Error {
     mng.allocator = allocator
 
     mng.alive_entities = 0

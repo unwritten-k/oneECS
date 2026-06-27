@@ -2,11 +2,11 @@ package main
 
 import "base:runtime"
 
-MAX_COMPONENTS :: #config(MAX_COMPONENTS, 32)
+DEFAULT_MAX_COMPONENTS :: #config(DEFAULT_MAX_COMPONENTS, 32)
 
 Component_Type :: int
 
-Component_Signature :: bit_set[0..<MAX_COMPONENTS; u32]
+Component_Signature :: bit_set[0..<DEFAULT_MAX_COMPONENTS; u32]
 
 Component_Manager :: struct {
     allocator: runtime.Allocator,
@@ -24,9 +24,9 @@ Component_Manager :: struct {
 component_manager_init :: proc (
     mng: ^Component_Manager,
     allocator:runtime.Allocator,
-    max_entites:=MAX_ENTITIES, 
-    max_types:=MAX_COMPONENTS, 
-    table_capacity:=MAX_ENTITIES,
+    max_entites:=DEFAULT_MAX_ENTITIES, 
+    max_types:=DEFAULT_MAX_COMPONENTS, 
+    table_capacity:=DEFAULT_MAX_ENTITIES,
     loc:=#caller_location
 ) -> Error {
 
