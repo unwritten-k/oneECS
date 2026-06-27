@@ -29,6 +29,8 @@ coordinator_entity_create_entity :: proc (self: ^Coordinator) -> (ent: Entity, e
 }
 
 coordinator_entity_destroy_entity :: proc (self: ^Coordinator, ent: Entity) -> Error {
+    sign := entity_manager_get_signature(&self.entity_mng, ent)
+    component_manager_clear_components(&self.component_mng, ent, sign)
     return entity_manager_destroy_entity(&self.entity_mng, ent)
 }
 
