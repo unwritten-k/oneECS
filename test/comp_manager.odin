@@ -39,10 +39,10 @@ comp_mng_test :: proc (_: ^testing.T) {
     table, err = ecs.component_manager_get_table(&comp_mng, Some_Data)
     assert_err(err)
     
+    iter_ent: ecs.Entity
     for &comp in table.components {
-        // ent: ecs.Entity
-        // ent, err = ecs.component_manager_get_entity(&comp_mng, &comp)
-        log.info("Iterating over", comp)
+        iter_ent, err = ecs.component_manager_get_entity(&comp_mng, &comp)
+        log.info("Iterating over", comp, "which is component of entity", iter_ent)
     }
 
     err = ecs.component_manager_remove_component(&comp_mng, Some_Data, entity)

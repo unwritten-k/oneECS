@@ -18,6 +18,7 @@ Table_Base :: struct {
     idx_to_entity: []Entity,
 
     idx_to_rawptr: []rawptr,
+    rawptr_to_ent: map[rawptr]Entity,
 
     size: int,
 }
@@ -34,9 +35,12 @@ table_base_init :: proc (
     table.capacity = table_capacity
     table.max_entities = max_entities
 
-    table.entity_to_idx = make([]int,       table_capacity, allocator, loc) or_return
-    table.idx_to_entity = make([]Entity,    table_capacity, allocator, loc) or_return
-    table.idx_to_rawptr = make([]rawptr,    table_capacity, allocator, loc) or_return
+    table.entity_to_idx = make([]int,               table_capacity, allocator, loc) or_return
+    table.idx_to_entity = make([]Entity,            table_capacity, allocator, loc) or_return
+    table.idx_to_rawptr = make([]rawptr,            table_capacity, allocator, loc) or_return
+
+    map_capacity := 16 * (table_capacity/16)
+    table.rawptr_to_ent = make(map[rawptr]Entity,   map_capacity, allocator, loc) or_return
 
     return ERROR_NONE
 }
@@ -50,6 +54,7 @@ free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) -> Error {
     delete(table.entity_to_idx, table.allocator, loc) or_return
     delete(table.idx_to_entity, table.allocator, loc) or_return
     delete(table.idx_to_rawptr, table.allocator, loc) or_return
+    delete(table.rawptr_to_ent, loc) or_return
 
     table.size = 0
 
@@ -93,6 +98,7 @@ table_bytes_remove_component :: proc (table: ^Table_Bytes, entity: Entity) -> Er
     }
 
     table.idx_to_rawptr[entity_to_remove_idx] = table.idx_to_rawptr[last_idx]
+    table.rawptr_to_ent[table.idx_to_rawptr[entity_to_remove_idx]] = table.rawptr_to_ent[table.idx_to_rawptr[last_idx]]
 
     last_entity := table.idx_to_entity[last_idx]
     table.entity_to_idx[last_entity] = entity_to_remove_idx
@@ -174,6 +180,7 @@ table_add_component :: proc (table: ^Table($T), entity: Entity) -> (component: ^
     }
     
     table.idx_to_rawptr[idx] = component
+    table.rawptr_to_ent[component] = entity
     
     raw.len += 1
     table.size += 1
@@ -202,7 +209,9 @@ table_get_component :: proc (table: ^Table($T), entity: Entity) -> (component:^T
 }
 
 table_get_entity :: proc (table: ^Table($T), component: ^T) -> (entity: Entity, err: Error) {
-    unimplemented_contextless("This function is not implemented __yet__")
+    if rawptr(component) not_in table.rawptr_to_ent do return ERROR_ENTITY, .Entity_Not_Found
+
+    return table.rawptr_to_ent[rawptr(component)], ERROR_NONE
 }
 
 table_clear :: proc (table: ^Table($T)) {
