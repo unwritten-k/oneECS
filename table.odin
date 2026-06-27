@@ -130,7 +130,7 @@ free_table_bytes :: proc (table: ^Table_Bytes, loc:=#caller_location) -> Error {
     
     free_table_base(&table.base, loc) or_return
 
-    delete(table.bytes, table.allocator, loc) or_return
+    mem.free_with_size(raw_data(table.bytes), table.capacity*table.type_info.size)
 
     return ERROR_NONE
 }
