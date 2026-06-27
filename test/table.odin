@@ -50,6 +50,7 @@ table_test :: proc (_: ^testing.T) {
 table_test2 :: proc (_: ^testing.T) {
 
     tables := make([]^ecs.Table_Base, ecs.MAX_COMPONENTS)
+    defer delete(tables)
 
     table : ecs.Table (Some_Data)
     err := ecs.table_init(&table, context.allocator)
