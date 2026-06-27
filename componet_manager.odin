@@ -8,7 +8,6 @@ Component_Manager :: struct {
     // Describes how many entities can there be
     // (if biggest entity is 1024, then there can be 1024 entities)
     biggest_entity: int,
-    max_types: int,
     table_capacity: int,
 
     type_to_idx: map[typeid]Component_Type,
@@ -21,7 +20,6 @@ component_manager_init :: proc (
     mng: ^Component_Manager,
     allocator:runtime.Allocator,
     max_entites:=DEFAULT_MAX_ENTITIES, 
-    max_types:=DEFAULT_MAX_COMPONENTS, 
     table_capacity:=DEFAULT_MAX_ENTITIES,
     loc:=#caller_location
 ) -> Error {
@@ -29,11 +27,10 @@ component_manager_init :: proc (
     mng.allocator = allocator
 
     mng.biggest_entity = max_entites
-    mng.max_types = max_types
     mng.table_capacity = table_capacity
 
-    mng.type_to_idx = make(map[typeid]Component_Type, max_types, allocator, loc) or_return
-    mng.tid_to_table = make([]^Table_Base, max_types, allocator, loc) or_return
+    mng.type_to_idx = make(map[typeid]Component_Type, MAX_COMPONENTS, allocator, loc) or_return
+    mng.tid_to_table = make([]^Table_Base, MAX_COMPONENTS, allocator, loc) or_return
 
     mng.n_types = 0
 
@@ -43,7 +40,7 @@ component_manager_init :: proc (
 // Allocates new table on heap and registers it under T typeid
 component_manager_register_type :: proc (mng: ^Component_Manager, $T: typeid, loc:=#caller_location) -> Error {
     if T in mng.type_to_idx do return .Already_Registered
-    if len(mng.type_to_idx) >= mng.max_types do return .Reached_Type_Limit
+    if len(mng.type_to_idx) >= MAX_COMPONENTS do return .Reached_Type_Limit
 
     table := new(Table(T), mng.allocator, loc) or_return
     table_init(table, mng.allocator, mng.biggest_entity, mng.table_capacity) or_return

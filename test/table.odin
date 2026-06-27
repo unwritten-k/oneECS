@@ -49,7 +49,7 @@ table_test :: proc (_: ^testing.T) {
 @test
 table_test2 :: proc (_: ^testing.T) {
 
-    tables := make([]^ecs.Table_Base, ecs.DEFAULT_MAX_COMPONENTS)
+    tables := make([]^ecs.Table_Base, ecs.MAX_COMPONENTS)
     defer delete(tables)
 
     table : ecs.Table (Some_Data)
