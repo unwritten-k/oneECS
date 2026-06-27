@@ -20,6 +20,8 @@ Entity_Manager :: struct {
 }
 
 entity_manager_init :: proc (mng: ^Entity_Manager, allocator: runtime.Allocator, max_entities:=i32(MAX_ENTITIES), loc:=#caller_location) -> Error {
+    mng.allocator = allocator
+
     mng.alive_entities = 0
     
     mng.maximum_entities = max_entities
