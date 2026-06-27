@@ -96,6 +96,15 @@ component_manager_get_type :: proc (mng: ^Component_Manager, T: typeid) -> (type
     return mng.type_to_idx[T], ERROR_NONE
 }
 
+component_manager_clear_components :: proc (mng: ^Component_Manager, entity: Entity, sign: Component_Signature) -> Error {
+    for bit in sign {
+        if bit > mng.n_types do continue
+        table := (^Table_Bytes)(mng.tid_to_table[bit])
+        table_bytes_remove_component(table, entity) or_return
+    }
+    return ERROR_NONE
+}
+
 component_manager_entity_is_valid :: #force_inline proc "contextless" (mng: ^Component_Manager, entity: Entity) -> bool {
     return entity >= 0 && entity < Entity(mng.biggest_entity)
 }
