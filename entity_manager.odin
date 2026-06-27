@@ -47,6 +47,8 @@ entity_manager_destroy_entity :: proc (mng: ^Entity_Manager, ent: Entity) -> Err
 
     if !entity_manager_entity_is_valid(mng, ent) || len(mng.available_entities) == 0 do return .Invalid_Entity
 
+    mng.signatures[ent] = {}
+
     mng.alive_entities -= 1
     // unlikely to happen
     if (len(mng.available_entities)+1 > cap(mng.available_entities)) do return .Too_Much_Entites
