@@ -11,7 +11,9 @@ Table_Base :: struct {
 
     type_info: ^runtime.Type_Info,
 
-    max_entities: int,
+    // Describes how many entities can there be
+    // (if biggest entity is 1024, then there can be 1024 entities)
+    biggest_entity: int,
     capacity: int,
 
     entity_to_idx: []int,
@@ -33,7 +35,7 @@ table_base_init :: proc (
     table.allocator = allocator
 
     table.capacity = table_capacity
-    table.max_entities = max_entities
+    table.biggest_entity = max_entities
 
     table.entity_to_idx = make([]int,               table_capacity, allocator, loc) or_return
     table.idx_to_entity = make([]Entity,            table_capacity, allocator, loc) or_return
@@ -46,7 +48,7 @@ table_base_init :: proc (
 }
 
 table_base_entity_is_valid :: proc (table: ^Table_Base, entity: Entity) -> bool {
-    return entity >= 0 && entity < i32(table.max_entities)
+    return entity >= 0 && entity < i32(table.biggest_entity)
 }
 
 free_table_base :: proc (table: ^Table_Base, loc:=#caller_location) -> Error {

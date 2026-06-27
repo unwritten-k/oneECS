@@ -5,7 +5,9 @@ import "base:runtime"
 Entity_Manager :: struct {
     allocator: runtime.Allocator,
 
-    maximum_entities: i32,
+    // Describes how many entities can there be
+    // (if biggest entity is 1024, then there can be 1024 entities)
+    biggest_entity: i32,
     available_entities: [dynamic]Entity,
     alive_entities: uint,
 
@@ -18,7 +20,7 @@ entity_manager_init :: proc (mng: ^Entity_Manager, allocator: runtime.Allocator,
 
     mng.alive_entities = 0
     
-    mng.maximum_entities = max_entities
+    mng.biggest_entity = max_entities
 
     mng.signatures = make([]Component_Signature, max_entities, allocator, loc) or_return
 
@@ -86,10 +88,10 @@ free_entity_manager :: proc (mng: ^Entity_Manager, loc:=#caller_location) {
     delete(mng.signatures, mng.allocator, loc)
 
     mng.alive_entities = 0
-    mng.maximum_entities = 0
+    mng.biggest_entity = 0
 }
 
 entity_is_valid :: proc (mng: ^Entity_Manager, ent: Entity) -> bool {
-    return ent >= 0 && ent < mng.maximum_entities
+    return ent >= 0 && ent < mng.biggest_entity
 }
 

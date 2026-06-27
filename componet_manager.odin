@@ -5,7 +5,9 @@ import "base:runtime"
 Component_Manager :: struct {
     allocator: runtime.Allocator,
 
-    max_entities: int,
+    // Describes how many entities can there be
+    // (if biggest entity is 1024, then there can be 1024 entities)
+    biggest_entity: int,
     max_types: int,
     table_capacity: int,
 
@@ -26,7 +28,7 @@ component_manager_init :: proc (
 
     mng.allocator = allocator
 
-    mng.max_entities = max_entites
+    mng.biggest_entity = max_entites
     mng.max_types = max_types
     mng.table_capacity = table_capacity
 
@@ -44,7 +46,7 @@ component_manager_register_type :: proc (mng: ^Component_Manager, $T: typeid, lo
     if len(mng.type_to_idx) >= mng.max_types do return .Reached_Type_Limit
 
     table := new(Table(T), mng.allocator, loc) or_return
-    table_init(table, mng.allocator, mng.max_entities, mng.table_capacity) or_return
+    table_init(table, mng.allocator, mng.biggest_entity, mng.table_capacity) or_return
 
     mng.type_to_idx[T] = mng.n_types
     mng.tid_to_table[mng.n_types] = (^Table_Base)(table)
@@ -92,7 +94,7 @@ component_manager_get_entity :: proc (mng: ^Component_Manager, component: ^$T) -
 }
 
 component_manager_entity_is_valid :: #force_inline proc "contextless" (mng: ^Component_Manager, entity: Entity) -> bool {
-    return entity >= 0 && entity < Entity(mng.max_entities)
+    return entity >= 0 && entity < Entity(mng.biggest_entity)
 }
 
 free_component_manager :: proc (mng: ^Component_Manager, loc:=#caller_location) -> Error {
