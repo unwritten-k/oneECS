@@ -90,6 +90,12 @@ component_manager_get_entity :: proc (mng: ^Component_Manager, component: ^$T) -
     return table_get_entity(table, component)
 }
 
+component_manager_get_type :: proc (mng: ^Component_Manager, T: typeid) -> (type: Component_Type, err: Error) {
+    if T not_in mng.type_to_idx do return ERROR_COMPONENT, .Not_Registered
+
+    return mng.type_to_idx[T], ERROR_NONE
+}
+
 component_manager_entity_is_valid :: #force_inline proc "contextless" (mng: ^Component_Manager, entity: Entity) -> bool {
     return entity >= 0 && entity < Entity(mng.biggest_entity)
 }

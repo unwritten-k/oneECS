@@ -25,12 +25,21 @@ comp_mng_test :: proc (_: ^testing.T) {
 
     entity: ecs.Entity
 
-    entity, err = ecs.entity_create(&entity_mng)
+    entity, err = ecs.entity_manager_create_entity(&entity_mng)
     assert_err(err)
 
     some_data: ^Some_Data
     some_data, err = ecs.component_manager_add_component(&comp_mng, Some_Data, entity)
     assert_err(err)
+
+    comp_type: ecs.Component_Type
+    comp_type, err = ecs.component_manager_get_type(&comp_mng, Some_Data)
+    assert_err(err)
+
+    err = ecs.entity_manager_sign_add_component(&entity_mng, entity, comp_type)
+    assert_err(err)
+    
+    log.info("Entity #", entity, " has signature: ", ecs.entity_manager_get_signature(&entity_mng, entity), sep="")
 
     some_data.x = 3.14
     some_data.y = 123.5
