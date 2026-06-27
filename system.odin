@@ -21,6 +21,8 @@ System :: struct {
 
     data: System_Data,
     fn: System_Proc,
+
+    dead: bool,
 }
 
 system_init :: proc (self: ^System, data: System_Data, signature: Component_Signature, fn: System_Proc) {
@@ -35,6 +37,7 @@ system_init :: proc (self: ^System, data: System_Data, signature: Component_Sign
 
 system_reset :: proc (self: ^System) {
     
+    self.dead = true
     self.fn = nil
     
     ent_raw := (^runtime.Raw_Slice)(&self.data.entities)
