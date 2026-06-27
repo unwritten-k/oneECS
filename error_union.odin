@@ -17,10 +17,18 @@ Table_Error :: enum {
     Reached_Component_Limit,
 }
 
+Component_Error :: enum {
+    None=0,
+    Already_Registered,
+    Not_Registered,
+    Reached_Type_Limit,
+}
+
 Error :: union {
     runtime.Allocator_Error,
     Table_Error,
     Entity_Error,
+    Component_Error,
 }
 
 ERROR_NONE :: Error{}
@@ -31,6 +39,7 @@ error_to_str :: proc (err: Error) -> (str:string) {
         case runtime.Allocator_Error:   str = enum_to_str(err.(runtime.Allocator_Error))
         case Table_Error:               str = enum_to_str(err.(Table_Error))
         case Entity_Error:              str = enum_to_str(err.(Entity_Error))
+        case Component_Error:           str = enum_to_str(err.(Component_Error))
     }
     return
 }
