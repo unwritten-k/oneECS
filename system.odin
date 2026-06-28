@@ -44,6 +44,8 @@ system_add_entity :: proc (self: ^System, entity: Entity, signature: Component_S
     if len(self.data.entities) + 1 >= self.capacity do return .Reached_System_Capacity
     if !(signature >= self.signature) do return .Signatures_Do_Not_Match
 
+    if system_has_entity(self, entity) do return ERROR_NONE // already has this entity, do nothing
+
     raw := (^runtime.Raw_Slice)(&self.data.entities)
 
     idx := len(self.data.entities)
