@@ -45,11 +45,12 @@ system_add_entity :: proc (self: ^System, entity: Entity, signature: Component_S
     if !(signature >= self.signature) do return .Signatures_Do_Not_Match
 
     raw := (^runtime.Raw_Slice)(&self.data.entities)
-    raw.len += 1
 
     idx := len(self.data.entities)
     self.data.ent_to_idx[entity] = idx
     self.data.entities[idx] = entity
+
+    raw.len += 1
 
     return ERROR_NONE
 }
