@@ -66,9 +66,7 @@ system_signature_changed :: proc (self: ^System, entity: Entity, new_signature: 
 
 system_entity_destroyed :: proc (self: ^System, entity: Entity) {
     if !system_entity_is_valid(self, entity) do return
-    #no_bounds_check {
-    if self.data.entities[self.data.ent_to_idx[entity]] != entity do return
-    }
+    if !system_has_entity(self, entity) do return
 
     last_idx := len(self.data.entities) - 1
     last_entity := self.data.entities[last_idx]
@@ -98,5 +96,9 @@ system_reset :: proc (self: ^System) {
 
 system_entity_is_valid :: proc (self: ^System, entity: Entity) -> bool {
     return entity >= 0 && entity < Entity(self.biggest_entity)
+}
+
+system_has_entity :: #force_inline proc"contextless" (self: ^System, entity: Entity) -> bool #no_bounds_check {
+    return self.data.entities[self.data.ent_to_idx[entity]] == entity
 }
 
