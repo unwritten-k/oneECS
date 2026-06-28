@@ -39,10 +39,10 @@ system_init :: proc (self: ^System, data: System_Data, biggest_entity:int, capac
     ent_raw.len = 0
 }
 
-system_add_entity :: proc (self: ^System, entity: Entity, signature: Component_Signature) {
-    if !system_entity_is_valid(self, entity) do return
-    if len(self.data.entities) + 1 >= self.capacity do return
-    if !(signature >= self.signature) do return
+system_add_entity :: proc (self: ^System, entity: Entity, signature: Component_Signature) -> Error {
+    if !system_entity_is_valid(self, entity) do return .Invalid_Entity
+    if len(self.data.entities) + 1 >= self.capacity do return .Reached_System_Capacity
+    if !(signature >= self.signature) do return .Signatures_Do_Not_Match
 
     raw := (^runtime.Raw_Slice)(&self.data.entities)
     raw.len += 1
@@ -50,6 +50,8 @@ system_add_entity :: proc (self: ^System, entity: Entity, signature: Component_S
     idx := len(self.data.entities)
     self.data.ent_to_idx[entity] = idx
     self.data.entities[idx] = entity
+
+    return ERROR_NONE
 }
 
 system_signature_changed :: proc (self: ^System, entity: Entity, new_signature: Component_Signature) {
