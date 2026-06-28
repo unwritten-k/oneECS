@@ -42,8 +42,8 @@ system_init :: proc (self: ^System, data: System_Data, biggest_entity:int, capac
 system_add_entity :: proc (self: ^System, entity: Entity, signature: Component_Signature) -> Error {
     if !system_entity_is_valid(self, entity) do return .Invalid_Entity
     if len(self.data.entities) + 1 >= self.capacity do return .Reached_System_Capacity
-    if !(signature >= self.signature) do return .Signatures_Do_Not_Match
 
+    if !do_signatures_match(signature, self.signature) do return ERROR_NONE // signatures do not match, do nothing
     if system_has_entity(self, entity) do return ERROR_NONE // already has this entity, do nothing
 
     raw := (^runtime.Raw_Slice)(&self.data.entities)
@@ -58,7 +58,7 @@ system_add_entity :: proc (self: ^System, entity: Entity, signature: Component_S
 }
 
 system_signature_changed :: proc (self: ^System, entity: Entity, new_signature: Component_Signature) {
-    if new_signature >= self.signature {
+    if do_signatures_match(new_signature, self.signature) {
         // keep everything as it is, since entity's new signature matches system's
         return
     }
