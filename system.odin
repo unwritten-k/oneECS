@@ -11,6 +11,7 @@ System_Result :: enum {
 
 System_Data :: struct {
     entities: []Entity,
+    ent_to_idx: [/*Entity*/]int,
     coordinator: ^Coordinator
 }
 
@@ -33,6 +34,30 @@ system_init :: proc (self: ^System, data: System_Data, signature: Component_Sign
 
     ent_raw := (^runtime.Raw_Slice)(&self.data.entities)
     ent_raw.len = 0
+}
+
+system_signature_changed :: proc (self: ^System, entity: Entity, new_signature: Component_Signature) {
+    if new_signature >= self.signature {
+        // keep everything as it is, since entity's new signature matches system's
+        return
+    }
+
+    system_entity_destroyed(self, entity)
+}
+
+system_entity_destroyed :: proc (self: ^System, entity: Entity) {
+    last_idx := len(self.data.entities) - 1
+    last_entity := self.data.entities[last_idx]
+
+    to_replace_idx := self.data.ent_to_idx[entity]
+
+    self.data.entities[to_replace_idx] = self.data.entities[last_idx]
+
+    self.data.ent_to_idx[last_entity] = to_replace_idx
+    self.data.ent_to_idx[entity] = len(self.data.entities)
+
+    raw := (^runtime.Raw_Slice)(&self.data.entities)
+    raw.len -= 1
 }
 
 system_reset :: proc (self: ^System) {
