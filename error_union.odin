@@ -7,7 +7,7 @@ Entity_Error :: enum {
     None=0,
     Invalid_Entity,
     No_Available_Entities,
-    Too_Much_Entites
+    Too_Much_Entities
 }
 
 Table_Error :: enum {

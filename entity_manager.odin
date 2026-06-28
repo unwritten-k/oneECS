@@ -51,7 +51,7 @@ entity_manager_destroy_entity :: proc (mng: ^Entity_Manager, ent: Entity) -> Err
 
     mng.alive_entities -= 1
     // unlikely to happen
-    if (len(mng.available_entities)+1 > cap(mng.available_entities)) do return .Too_Much_Entites
+    if (len(mng.available_entities)+1 > cap(mng.available_entities)) do return .Too_Much_Entities
     
     append(&mng.available_entities, ent)
 
