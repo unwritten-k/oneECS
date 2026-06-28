@@ -2,14 +2,8 @@ package main
 
 import "base:runtime"
 
-System_Group :: struct {
-    signature: Component_Signature,
-    systems: [dynamic]System,
-
-}
-
 System_Manager :: struct {
-    system_groups: map[Component_Signature]System_Group,
+    systems: [dynamic]System,
 
     failure_proc: proc (err: Error, system: ^System),
 
@@ -30,7 +24,7 @@ system_manager_init :: proc (
     
     mng.allocator = allocator
     
-    mng.system_groups = make(map[Component_Signature]System_Group, start_capacity_of_system_arr, allocator) or_return
+    mng.systems = make([dynamic]System, start_capacity_of_system_arr, allocator) or_return
 
     mng.biggest_entity = biggest_entity
     mng.system_capacity = system_capacity
@@ -38,40 +32,64 @@ system_manager_init :: proc (
     return ERROR_NONE
 }
 
-system_manager_reg_system :: proc (mng: ^System_Manager, data: System_Data, fn: System_Proc, signature: Component_Signature, loc:=#caller_location) -> Error {
+system_manager_reg_system :: proc (
+    mng: ^System_Manager,
+
+    coordinator: ^Coordinator,
+
+    fn: System_Proc,
+    signature: Component_Signature, 
+    loc:=#caller_location) -> Error {
+    
+    data: System_Data
+    data.coordinator = coordinator
+    data.entities = make([]Entity, mng.system_capacity, mng.allocator)
+    data.ent_to_idx = make([]int, mng.biggest_entity, mng.allocator)
 
     system: System
     system_init(&system, data, mng.biggest_entity, mng.system_capacity, signature, fn)
 
-    if system_group, ok := mng.system_groups[signature]; ok {
-        append(&system_group.systems, system)
-    }
-    else {
-        mng.system_groups[signature] = System_Group{
-            signature,
-            make([dynamic]System, 8, mng.allocator, loc)
-        }
-        append(&system_group.systems, system)
-    }
+    append(&mng.systems, system)
 
     return ERROR_NONE
 }
 
 system_manager_run :: proc (mng: ^System_Manager) {
-    for sig, &group in mng.system_groups {
-        for &system in group.systems {
-            if system.dead do continue
+    for &system in mng.systems {
+        if system.dead do continue
 
-            res, err := system.fn(&system.data)
-            switch res {
-                case .Continue: continue
-                case .Terminate: system.dead = true
-                case .Error: {
-                    system.dead = true
-                    if mng.failure_proc != nil do mng.failure_proc(err, &system)
-                }
+        res, err := system.fn(&system.data)
+        switch res {
+            case .Continue: continue
+            case .Terminate: system.dead = true
+            case .Error: {
+                system.dead = true
+                if mng.failure_proc != nil do mng.failure_proc(err, &system)
             }
         }
+    }
+}
+
+system_manager_entity_added :: proc (mng: ^System_Manager, entity: Entity, signature: Component_Signature) {
+    for &system in mng.systems {
+        err := system_add_entity(&system, entity, signature)
+
+        if err != ERROR_NONE {
+            system.dead = true
+            if mng.failure_proc != nil do mng.failure_proc(err, &system)
+        }
+    }
+}
+
+system_manager_entity_sign_changed :: proc (mng: ^System_Manager, entity: Entity, new_signature: Component_Signature) {
+    for &system in mng.systems {
+        system_signature_changed(&system, entity, new_signature)
+    }
+}
+
+system_manager_entity_destroyed :: proc (mng: ^System_Manager, entity: Entity) {
+    for &system in mng.systems {
+        system_entity_destroyed(&system, entity)
     }
 }
 
