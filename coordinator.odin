@@ -108,7 +108,7 @@ coordinator_clear_components :: #force_inline proc (self: ^Coordinator, ent: Ent
 // will be added to keep new system up to date.
 // That's why it is not recommended to register system after
 // creating any entities and adding components.
-coordinator_reg_system :: #force_inline proc (self: ^Coordinator, fn: System_Proc, signature: Component_Signature, user_data: rawptr, loc:=#caller_location) -> Error {
+coordinator_reg_system :: #force_inline proc (self: ^Coordinator, fn: System_Proc, signature: Component_Signature, user_data:rawptr=nil, loc:=#caller_location) -> Error {
     system_manager_reg_system(&self.system_mng, self, fn, signature, user_data, loc) or_return
 
     if self.entity_mng.alive_entities != 0 {
