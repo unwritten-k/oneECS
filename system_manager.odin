@@ -71,20 +71,14 @@ system_manager_run :: proc (mng: ^System_Manager) {
     }
 }
 
-system_manager_entity_added :: proc (mng: ^System_Manager, entity: Entity, signature: Component_Signature) {
+system_manager_entity_sign_changed :: proc (mng: ^System_Manager, entity: Entity, new_signature: Component_Signature) {
     for &system in mng.systems {
-        err := system_add_entity(&system, entity, signature)
+        err := system_signature_changed(&system, entity, new_signature)
 
         if err != ERROR_NONE {
             system.dead = true
             if mng.failure_proc != nil do mng.failure_proc(err, &system)
         }
-    }
-}
-
-system_manager_entity_sign_changed :: proc (mng: ^System_Manager, entity: Entity, new_signature: Component_Signature) {
-    for &system in mng.systems {
-        system_signature_changed(&system, entity, new_signature)
     }
 }
 
