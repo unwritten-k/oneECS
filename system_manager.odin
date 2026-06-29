@@ -57,7 +57,7 @@ system_manager_reg_system :: proc (
 
 system_manager_run :: proc (mng: ^System_Manager) {
     for &system in mng.systems {
-        if system.dead do continue
+        if system.dead || !system.initialized do continue
 
         res, err := system.fn(&system.data)
         switch res {
@@ -73,6 +73,8 @@ system_manager_run :: proc (mng: ^System_Manager) {
 
 system_manager_entity_sign_changed :: proc (mng: ^System_Manager, entity: Entity, new_signature: Component_Signature) {
     for &system in mng.systems {
+        if !system.initialized do continue
+
         err := system_signature_changed(&system, entity, new_signature)
 
         if err != ERROR_NONE {
@@ -84,12 +86,16 @@ system_manager_entity_sign_changed :: proc (mng: ^System_Manager, entity: Entity
 
 system_manager_entity_destroyed :: proc (mng: ^System_Manager, entity: Entity) {
     for &system in mng.systems {
+        if !system.initialized do continue
+
         system_entity_destroyed(&system, entity)
     }
 }
 
 free_system_manager :: proc (mng: ^System_Manager, loc:=#caller_location) -> Error {
     for &sys in mng.systems {
+        if !sys.initialized do continue
+
         system_reset(&sys)
 
         delete(sys.data.entities, mng.allocator, loc) or_return
