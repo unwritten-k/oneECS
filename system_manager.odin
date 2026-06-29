@@ -88,17 +88,19 @@ system_manager_entity_destroyed :: proc (mng: ^System_Manager, entity: Entity) {
     }
 }
 
-free_system_manager :: proc (mng: ^System_Manager, loc:=#caller_location) {
+free_system_manager :: proc (mng: ^System_Manager, loc:=#caller_location) -> Error {
     for &sys in mng.systems {
         system_reset(&sys)
 
-        delete(sys.data.entities, mng.allocator, loc)
-        delete(sys.data.ent_to_idx, mng.allocator, loc)
+        delete(sys.data.entities, mng.allocator, loc) or_return
+        delete(sys.data.ent_to_idx, mng.allocator, loc) or_return
     }
 
-    delete(mng.systems, loc)
+    delete(mng.systems, loc) or_return
 
     mng.biggest_entity = 0
     mng.system_capacity = 0
+
+    return ERROR_NONE
 }
 
