@@ -24,7 +24,7 @@ system_manager_init :: proc (
     
     mng.allocator = allocator
     
-    mng.systems = make([dynamic]System, start_capacity_of_system_arr, allocator) or_return
+    mng.systems = make([dynamic]System, 0, start_capacity_of_system_arr, allocator) or_return
 
     mng.biggest_entity = biggest_entity
     mng.system_capacity = system_capacity
