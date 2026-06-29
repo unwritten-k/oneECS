@@ -35,18 +35,18 @@ coordinator_init :: proc (
     return ERROR_NONE
 }
 
-coordinator_entity_create_entity :: proc (self: ^Coordinator) -> (ent: Entity, err: Error) {
+coordinator_entity_create_entity :: #force_inline proc (self: ^Coordinator) -> (ent: Entity, err: Error) {
     return entity_manager_create_entity(&self.entity_mng)
 }
 
-coordinator_entity_destroy_entity :: proc (self: ^Coordinator, ent: Entity) -> Error {
+coordinator_entity_destroy_entity :: #force_inline proc (self: ^Coordinator, ent: Entity) -> Error {
     sign := entity_manager_get_signature(&self.entity_mng, ent)
     component_manager_clear_components(&self.component_mng, ent, sign)
     system_manager_entity_destroyed(&self.system_mng, ent)
     return entity_manager_destroy_entity(&self.entity_mng, ent)
 }
 
-coordinator_reg_component :: proc (self: ^Coordinator, $T: typeid, loc:=#caller_location) -> Error {
+coordinator_reg_component :: #force_inline proc "contextless" (self: ^Coordinator, $T: typeid, loc:=#caller_location) -> Error {
     return component_manager_register_type(&self.component_mng, T, loc)
 }
 
@@ -87,12 +87,12 @@ coordinator_remove_component :: proc (self: ^Coordinator, ent: Entity, T: typeid
     return ERROR_NONE
 }
 
-coordinator_get_component :: proc (self: ^Coordinator, ent: Entity, $T: typeid) -> (component: ^T, err: Error) {
+coordinator_get_component :: #force_inline proc "contextless" (self: ^Coordinator, ent: Entity, $T: typeid) -> (component: ^T, err: Error) {
 
     return component_manager_get_component(&self.component_mng, T, ent)
 }
 
-coordinator_get_entity :: proc (self: ^Coordinator, component: ^$T) -> (ent: Entity, err: Error) {
+coordinator_get_entity :: #force_inline proc "contextless" (self: ^Coordinator, component: ^$T) -> (ent: Entity, err: Error) {
 
     return component_manager_get_entity(&self.component_mng, component)
 }
@@ -103,7 +103,7 @@ coordinator_get_entity :: proc (self: ^Coordinator, component: ^$T) -> (ent: Ent
 // will be added to keep new system up to date.
 // That's why it is not recommended to register system after
 // creating any entities and adding components.
-coordinator_reg_system :: proc (self: ^Coordinator, fn: System_Proc, signature: Component_Signature, loc:=#caller_location) -> Error {
+coordinator_reg_system :: #force_inline proc (self: ^Coordinator, fn: System_Proc, signature: Component_Signature, loc:=#caller_location) -> Error {
     system_manager_reg_system(&self.system_mng, self, fn, signature, loc) or_return
 
     if self.entity_mng.alive_entities != 0 {
@@ -113,11 +113,11 @@ coordinator_reg_system :: proc (self: ^Coordinator, fn: System_Proc, signature: 
     return ERROR_NONE
 }
 
-coordinator_run_systems :: proc (self: ^Coordinator) {
+coordinator_run_systems :: #force_inline proc (self: ^Coordinator) {
     system_manager_run(&self.system_mng)
 }
 
-coordinator_make_signature :: proc (self: ^Coordinator, typeids: []typeid) -> (signature: Component_Signature, err: Error) {
+coordinator_make_signature :: #force_inline proc (self: ^Coordinator, typeids: []typeid) -> (signature: Component_Signature, err: Error) {
     for t in typeids {
         type_n := component_manager_get_type(&self.component_mng, t) or_return
         signature += {type_n}
