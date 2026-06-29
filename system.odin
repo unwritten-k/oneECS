@@ -37,6 +37,9 @@ system_init :: proc (self: ^System, data: System_Data, biggest_entity:int, capac
     self.signature = signature
     self.initialized = true
 
+    self.biggest_entity = biggest_entity
+    self.capacity = capacity
+
     ent_raw := (^runtime.Raw_Slice)(&self.data.entities)
     ent_raw.len = 0
 }
@@ -50,7 +53,11 @@ system_add_entity :: proc (self: ^System, entity: Entity) -> Error {
 
     idx := len(self.data.entities)
     self.data.ent_to_idx[entity] = idx
-    self.data.entities[idx] = entity
+    // no bounds check, because idx == len(self.data.entities)
+    // which is out of bounds
+    #no_bounds_check {
+        self.data.entities[idx] = entity
+    }
 
     raw.len += 1
 
@@ -105,6 +112,9 @@ system_entity_is_valid :: proc (self: ^System, entity: Entity) -> bool {
 }
 
 system_has_entity :: #force_inline proc"contextless" (self: ^System, entity: Entity) -> bool #no_bounds_check {
-    return self.data.entities[self.data.ent_to_idx[entity]] == entity
+    idx := self.data.ent_to_idx[entity]
+    // check if idx isn't out of self.data.entities bounds
+    // and check if entity at that id is actually equals to [param]entity
+    return idx < len(self.data.entities) && self.data.entities[idx] == entity
 }
 
