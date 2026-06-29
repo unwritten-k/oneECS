@@ -35,18 +35,18 @@ coordinator_init :: proc (
     return ERROR_NONE
 }
 
-coordinator_entity_create_entity :: #force_inline proc (self: ^Coordinator) -> (ent: Entity, err: Error) {
+coordinator_create_entity :: #force_inline proc (self: ^Coordinator) -> (ent: Entity, err: Error) {
     return entity_manager_create_entity(&self.entity_mng)
 }
 
-coordinator_entity_destroy_entity :: #force_inline proc (self: ^Coordinator, ent: Entity) -> Error {
+coordinator_destroy_entity :: #force_inline proc (self: ^Coordinator, ent: Entity) -> Error {
     sign := entity_manager_get_signature(&self.entity_mng, ent)
     component_manager_clear_components(&self.component_mng, ent, sign)
     system_manager_entity_destroyed(&self.system_mng, ent)
     return entity_manager_destroy_entity(&self.entity_mng, ent)
 }
 
-coordinator_reg_component :: #force_inline proc "contextless" (self: ^Coordinator, $T: typeid, loc:=#caller_location) -> Error {
+coordinator_reg_component :: #force_inline proc (self: ^Coordinator, $T: typeid, loc:=#caller_location) -> Error {
     return component_manager_register_type(&self.component_mng, T, loc)
 }
 
@@ -87,12 +87,12 @@ coordinator_remove_component :: proc (self: ^Coordinator, ent: Entity, T: typeid
     return ERROR_NONE
 }
 
-coordinator_get_component :: #force_inline proc "contextless" (self: ^Coordinator, ent: Entity, $T: typeid) -> (component: ^T, err: Error) {
+coordinator_get_component :: #force_inline proc (self: ^Coordinator, ent: Entity, $T: typeid) -> (component: ^T, err: Error) {
 
     return component_manager_get_component(&self.component_mng, T, ent)
 }
 
-coordinator_get_entity :: #force_inline proc "contextless" (self: ^Coordinator, component: ^$T) -> (ent: Entity, err: Error) {
+coordinator_get_entity :: #force_inline proc (self: ^Coordinator, component: ^$T) -> (ent: Entity, err: Error) {
 
     return component_manager_get_entity(&self.component_mng, component)
 }

@@ -14,7 +14,7 @@ coord_test :: proc (_: ^testing.T) {
     defer ecs.free_coordinator(&coordinator)
 
     entity: ecs.Entity
-    entity, err = ecs.coordinator_entity_create_entity(&coordinator)
+    entity, err = ecs.coordinator_create_entity(&coordinator)
     assert_err(err)
 
     err = ecs.coordinator_reg_component(&coordinator, Some_Data)

@@ -35,7 +35,7 @@ sys_mng_test :: proc (_: ^testing.T) {
     ecs.coordinator_set_system_failure_fn(&coordinator, failure_proc)
 
     ent: ecs.Entity
-    ent, err = ecs.coordinator_entity_create_entity(&coordinator)
+    ent, err = ecs.coordinator_create_entity(&coordinator)
     assert_err(err)
 
     assert_err(ecs.coordinator_reg_component(&coordinator, Some_Data))
@@ -132,7 +132,7 @@ sys_mng_many_entities_test :: proc (_: ^testing.T) {
     some_data: ^Some_Data
     for i in 0..<10 {
         
-        ent, err = ecs.coordinator_entity_create_entity(&coordinator)
+        ent, err = ecs.coordinator_create_entity(&coordinator)
         assert_err(err)
 
         health, err = ecs.coordinator_add_component(&coordinator, ent, Some_Health)
