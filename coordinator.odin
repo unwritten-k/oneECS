@@ -97,6 +97,11 @@ coordinator_get_entity :: #force_inline proc (self: ^Coordinator, component: ^$T
     return component_manager_get_entity(&self.component_mng, component)
 }
 
+coordinator_clear_components :: #force_inline proc (self: ^Coordinator, ent: Entity, T: typeid) -> Error {
+    sign := entity_manager_get_signature(&self.entity_mng, ent)
+    return component_manager_clear_components(&self.component_mng, ent, sign)
+}
+
 // Allocates and registers system.
 // If there are alive entities,
 // entities with required signature
