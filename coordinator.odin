@@ -97,8 +97,20 @@ coordinator_get_entity :: proc (self: ^Coordinator, component: ^$T) -> (ent: Ent
     return component_manager_get_entity(&self.component_mng, component)
 }
 
+// Allocates and registers system.
+// If there are alive entities,
+// entities with required signature
+// will be added to keep new system up to date.
+// That's why it is not recommended to register system after
+// creating any entities and adding components.
 coordinator_reg_system :: proc (self: ^Coordinator, fn: System_Proc, signature: Component_Signature, loc:=#caller_location) -> Error {
-    return system_manager_reg_system(&self.system_mng, self, fn, signature, loc)
+    system_manager_reg_system(&self.system_mng, self, fn, signature, loc) or_return
+
+    if self.entity_mng.alive_entities != 0 {
+        system_manager_update_entities(&self.system_mng, len(self.system_mng.systems)-1, self.entity_mng.signatures)
+    }
+
+    return ERROR_NONE
 }
 
 coordinator_run_systems :: proc (self: ^Coordinator) {

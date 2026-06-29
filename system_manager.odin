@@ -94,6 +94,26 @@ system_manager_entity_destroyed :: proc (mng: ^System_Manager, entity: Entity) {
     }
 }
 
+@private
+// Accepts system id to update and signatures array,
+// where index is Entity and Value is Component_Signature.
+// Array as such is stored in Entity_Manager
+system_manager_update_entities :: proc (mng: ^System_Manager, sys_id: int, signatures: [/*Entity*/]Component_Signature) -> Error {
+    if sys_id < 0 || sys_id >= len(mng.systems) do return .Invalid_System_Id
+    
+    system := &mng.systems[sys_id]
+
+    for sign, ent in signatures {
+        if sign == nil do continue
+        
+        if do_signatures_match(sign, system.signature) {
+            system_add_entity(system, Entity(ent)) or_return
+        }
+    }
+
+    return ERROR_NONE
+}
+
 free_system_manager :: proc (mng: ^System_Manager, loc:=#caller_location) -> Error {
     for &sys in mng.systems {
         if !sys.initialized do continue

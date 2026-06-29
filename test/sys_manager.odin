@@ -40,19 +40,20 @@ sys_mng_test :: proc (_: ^testing.T) {
 
     assert_err(ecs.coordinator_reg_component(&coordinator, Some_Data))
 
-    sign : ecs.Component_Signature
-    sign, err = ecs.coordinator_make_signature(&coordinator, {Some_Data})
-    assert_err(err)
-
-    err = ecs.coordinator_reg_system(&coordinator, fall_system, sign)
-    assert_err(err)
-
     some_data: ^Some_Data
     some_data, err = ecs.coordinator_add_component(&coordinator, ent, Some_Data)
     assert_err(err)
     
     some_data.x = 3.14
     some_data.y = 6.28
+
+    sign : ecs.Component_Signature
+    sign, err = ecs.coordinator_make_signature(&coordinator, {Some_Data})
+    assert_err(err)
+
+    // test registering system after creating entity and assigning component
+    err = ecs.coordinator_reg_system(&coordinator, fall_system, sign)
+    assert_err(err)
 
     for _ in 0..<10 {
         ecs.coordinator_run_systems(&coordinator)

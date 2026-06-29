@@ -28,6 +28,7 @@ System_Error :: enum {
     None=0,
     Signatures_Do_Not_Match,
     Reached_System_Capacity,
+    Invalid_System_Id,
 }
 
 Error :: union {
