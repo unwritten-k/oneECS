@@ -39,7 +39,8 @@ system_manager_reg_system :: proc (
 
     fn: System_Proc,
     signature: Component_Signature, 
-    loc:=#caller_location) -> Error {
+    loc:=#caller_location
+) -> Error {
     
     data: System_Data
     data.coordinator = coordinator
