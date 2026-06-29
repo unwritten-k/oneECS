@@ -12,7 +12,8 @@ System_Result :: enum {
 System_Data :: struct {
     entities: []Entity,
     ent_to_idx: [/*Entity*/]int,
-    coordinator: ^Coordinator
+    coordinator: ^Coordinator,
+    user_data: rawptr,
 }
 
 System_Proc :: #type proc (data: ^System_Data) -> (System_Result, Error)

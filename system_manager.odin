@@ -40,7 +40,9 @@ system_manager_reg_system :: proc (
     coordinator: ^Coordinator,
 
     fn: System_Proc,
-    signature: Component_Signature, 
+    signature: Component_Signature,
+    user_data: rawptr,
+
     loc:=#caller_location
 ) -> Error {
     
@@ -48,6 +50,7 @@ system_manager_reg_system :: proc (
     data.coordinator = coordinator
     data.entities = make([]Entity, mng.system_capacity, mng.allocator)
     data.ent_to_idx = make([]int, mng.biggest_entity, mng.allocator)
+    data.user_data = user_data
 
     system: System
     system_init(&system, data, mng.biggest_entity, mng.system_capacity, signature, fn)
