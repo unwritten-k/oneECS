@@ -57,14 +57,14 @@ system_manager_reg_system :: proc (
 
 system_manager_run :: proc (mng: ^System_Manager) {
     for &system in mng.systems {
-        if !system.alive do continue
+        if system.dead do continue
 
         res, err := system.fn(&system.data)
         switch res {
             case .Continue: continue
-            case .Terminate: system.alive = false
+            case .Terminate: system.dead = true
             case .Error: {
-                system.alive = false
+                system.dead = true
                 if mng.failure_proc != nil do mng.failure_proc(err, &system)
             }
         }
@@ -76,7 +76,7 @@ system_manager_entity_sign_changed :: proc (mng: ^System_Manager, entity: Entity
         err := system_signature_changed(&system, entity, new_signature)
 
         if err != ERROR_NONE {
-            system.alive = false
+            system.dead = true
             if mng.failure_proc != nil do mng.failure_proc(err, &system)
         }
     }

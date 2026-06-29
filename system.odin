@@ -26,7 +26,8 @@ System :: struct {
     data: System_Data,
     fn: System_Proc,
 
-    alive: bool,
+    dead: bool,
+    initialized: bool,
 }
 
 system_init :: proc (self: ^System, data: System_Data, biggest_entity:int, capacity:int, signature: Component_Signature, fn: System_Proc) {
@@ -34,6 +35,7 @@ system_init :: proc (self: ^System, data: System_Data, biggest_entity:int, capac
     self.fn = fn
     self.data = data
     self.signature = signature
+    self.initialized = true
 
     ent_raw := (^runtime.Raw_Slice)(&self.data.entities)
     ent_raw.len = 0
@@ -87,7 +89,8 @@ system_entity_destroyed :: proc (self: ^System, entity: Entity) {
 
 system_reset :: proc (self: ^System) {
     
-    self.alive = false
+    self.initialized = false
+    self.dead = true
     self.fn = nil
     
     ent_raw := (^runtime.Raw_Slice)(&self.data.entities)
