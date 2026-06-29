@@ -2,10 +2,12 @@ package main
 
 import "base:runtime"
 
+System_Failure_Proc :: proc (err: Error, system: ^System)
+
 System_Manager :: struct {
     systems: [dynamic]System,
 
-    failure_proc: proc (err: Error, system: ^System),
+    failure_proc: System_Failure_Proc,
 
     biggest_entity: int,
     system_capacity: int,
