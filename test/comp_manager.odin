@@ -29,7 +29,7 @@ comp_mng_test :: proc (_: ^testing.T) {
     assert_err(err)
 
     some_data: ^Some_Data
-    some_data, err = ecs.component_manager_add_component(&comp_mng, Some_Data, entity)
+    some_data, err = ecs.component_manager_add_component(&comp_mng, entity, Some_Data)
     assert_err(err)
 
     comp_type: ecs.Component_Type
@@ -54,7 +54,7 @@ comp_mng_test :: proc (_: ^testing.T) {
         log.info("Iterating over", comp, "which is component of entity", iter_ent)
     }
 
-    err = ecs.component_manager_remove_component(&comp_mng, Some_Data, entity)
+    err = ecs.component_manager_remove_component(&comp_mng, entity, Some_Data)
     assert_err(err)
 
     log.info("Pointer to invalid Some_Data:", some_data)

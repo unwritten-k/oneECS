@@ -53,7 +53,7 @@ component_manager_register_type :: proc (mng: ^Component_Manager, $T: typeid, lo
     return ERROR_NONE
 }
 
-component_manager_add_component :: proc (mng: ^Component_Manager, $T: typeid, entity: Entity) -> (component: ^T, err: Error) {
+component_manager_add_component :: proc (mng: ^Component_Manager, entity: Entity, $T: typeid,) -> (component: ^T, err: Error) {
     if T not_in mng.type_to_idx do return nil, .Not_Registered
     if !component_manager_entity_is_valid(mng, entity) do return nil, .Invalid_Entity
 
@@ -61,7 +61,7 @@ component_manager_add_component :: proc (mng: ^Component_Manager, $T: typeid, en
     return table_add_component(table, entity)
 }
 
-component_manager_remove_component :: proc (mng: ^Component_Manager, T: typeid, entity: Entity) -> Error {
+component_manager_remove_component :: proc (mng: ^Component_Manager, entity: Entity, T: typeid,) -> Error {
     if T not_in mng.type_to_idx do return .Not_Registered
     if !component_manager_entity_is_valid(mng, entity) do return .Invalid_Entity
 
@@ -69,7 +69,7 @@ component_manager_remove_component :: proc (mng: ^Component_Manager, T: typeid, 
     return table_bytes_remove_component(table, entity)
 }
 
-component_manager_get_component :: proc (mng: ^Component_Manager, $T: typeid, entity: Entity) -> (component: ^T, err: Error) {
+component_manager_get_component :: proc (mng: ^Component_Manager, entity: Entity, $T: typeid,) -> (component: ^T, err: Error) {
     if T not_in mng.type_to_idx do return nil, .Not_Registered
     if !component_manager_entity_is_valid(mng, entity) do return nil, .Invalid_Entity
 

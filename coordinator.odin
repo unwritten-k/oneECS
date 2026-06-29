@@ -52,7 +52,7 @@ coordinator_reg_component :: #force_inline proc (self: ^Coordinator, $T: typeid,
 
 coordinator_add_component :: proc (self: ^Coordinator, ent: Entity, $T: typeid) -> (component: ^T, err: Error) {
 
-    component = component_manager_add_component(&self.component_mng, T, ent) or_return
+    component = component_manager_add_component(&self.component_mng, ent, T) or_return
 
     comp_type: Component_Type
     comp_type, err = component_manager_get_type(&self.component_mng, T)
@@ -75,7 +75,7 @@ coordinator_add_component :: proc (self: ^Coordinator, ent: Entity, $T: typeid) 
 
 coordinator_remove_component :: proc (self: ^Coordinator, ent: Entity, T: typeid) -> Error {
 
-    component_manager_remove_component(&self.component_mng, T, ent) or_return
+    component_manager_remove_component(&self.component_mng, ent, T) or_return
 
     comp_id := component_manager_get_type(&self.component_mng, T) or_return
 
@@ -89,7 +89,7 @@ coordinator_remove_component :: proc (self: ^Coordinator, ent: Entity, T: typeid
 
 coordinator_get_component :: #force_inline proc (self: ^Coordinator, ent: Entity, $T: typeid) -> (component: ^T, err: Error) {
 
-    return component_manager_get_component(&self.component_mng, T, ent)
+    return component_manager_get_component(&self.component_mng, ent, T)
 }
 
 coordinator_get_entity :: #force_inline proc (self: ^Coordinator, component: ^$T) -> (ent: Entity, err: Error) {
