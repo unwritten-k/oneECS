@@ -93,3 +93,17 @@ system_manager_entity_destroyed :: proc (mng: ^System_Manager, entity: Entity) {
     }
 }
 
+free_system_manager :: proc (mng: ^System_Manager, loc:=#caller_location) {
+    for &sys in mng.systems {
+        system_reset(&sys)
+
+        delete(sys.data.entities, mng.allocator, loc)
+        delete(sys.data.ent_to_idx, mng.allocator, loc)
+    }
+
+    delete(mng.systems, loc)
+
+    mng.biggest_entity = 0
+    mng.system_capacity = 0
+}
+
