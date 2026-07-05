@@ -21,11 +21,8 @@ Database :: struct {
     
     signatures: [/*Entity ID*/]Component_Signature,
 
-    component_types_count: int,
-    idx_to_type: [COMPONENT_SIGNATURES_MAX]typeid, // no need for allocation, since length will always be constant
-
     attached_tables_count: int,
-    attached_tables: [COMPONENT_SIGNATURES_MAX]^Basic_Table,
+    tid_to_table: [COMPONENT_SIGNATURES_MAX]^Basic_Table,
 }
 
 database_init :: proc (self: ^Database, allocator: runtime.Allocator, max_entities:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> Error {
@@ -41,13 +38,14 @@ database_init :: proc (self: ^Database, allocator: runtime.Allocator, max_entiti
 }
 
 @private
-database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> Error {
-    if self.attached_tables_count >= len(self.attached_tables) do return Collection_Error.Exceeded_Capacity
+database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> (int, Error) {
+    if self.attached_tables_count >= len(self.tid_to_table) do return 0, Collection_Error.Exceeded_Capacity
 
-    self.attached_tables[self.attached_tables_count] = table
+    tid := self.attached_tables_count
+    self.tid_to_table[tid] = table
     self.attached_tables_count += 1
 
-    return ERROR_NONE
+    return tid, ERROR_NONE
 }
 
 database_create_entity :: #force_inline proc (self: ^Database) -> (ent: Entity_Id, err: Error) {
@@ -73,16 +71,6 @@ database_get_signature :: #force_inline proc (self: ^Database, ent: Entity_Id) -
     if !database_entity_is_valid(self, ent) do return nil, Collection_Error.Invalid_Entity
 
     return self.signatures[ent.idx], ERROR_NONE
-} 
-
-@private
-database_register_type :: proc (self: ^Database, T: typeid) -> (int, Error) {
-    if self.component_types_count >= len(self.idx_to_type) do return -1, Collection_Error.Exceeded_Capacity
-
-    t_id := self.component_types_count
-    self.idx_to_type[t_id] = T
-
-    return t_id, ERROR_NONE
 }
 
 database_signature_add_component :: proc (self: ^Database, ent: Entity_Id, type_id: int) -> Error {
@@ -111,7 +99,7 @@ database_signature_clear :: proc (self: ^Database, ent: Entity_Id) -> Error {
 
 database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
     for i in 0..<self.attached_tables_count {
-        table := self.attached_tables[i]
+        table := self.tid_to_table[i]
         assert(table != nil) // sanity check
         basic_table_free(table, loc) or_return
     }

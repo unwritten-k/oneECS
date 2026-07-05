@@ -34,8 +34,6 @@ table_base_init :: proc (self: ^Table_Base, db: ^Database, capacity: int, loc:=#
         id = INVALID_ID
     }
 
-    database_attach_table(self.db, (^Basic_Table)(self))
-
     return ERROR_NONE
 }
 
@@ -69,8 +67,7 @@ table_bytes_init :: proc (self: ^Table_Bytes, db: ^Database, capacity: int, type
 
     self.type_info = type_info
 
-    t_id := database_register_type(db, type_info.id) or_return
-    self.t_id = t_id
+    self.t_id = database_attach_table(self.db, (^Basic_Table)(self)) or_return
 
     return ERROR_NONE
 }
@@ -126,8 +123,7 @@ table_init :: proc (self: ^Table($T), db: ^Database, capacity: int, loc:=#caller
 
     self.components = make([]T, capacity, db.allocator, loc) or_return
 
-    t_id := database_register_type(db, T) or_return
-    self.t_id = t_id
+    self.t_id = database_attach_table(self.db, (^Basic_Table)(self)) or_return
 
     return ERROR_NONE
 }
