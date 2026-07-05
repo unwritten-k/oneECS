@@ -9,6 +9,7 @@ Collection_Error :: enum {
     Invalid_Entity,
     Entity_Not_Found,
     Already_Added,
+    Exceeded_Capacity,
 }
 
 Error :: union #shared_nil {
