@@ -4,16 +4,18 @@ import "core:fmt"
 import "base:runtime"
 import core "core"
 
-Entity_Error :: enum {
+Collection_Error :: enum {
     None=0,
     Invalid_Entity,
+    Entity_Not_Found,
+    Already_Added,
 }
 
 Error :: union #shared_nil {
     runtime.Allocator_Error,
     core.Error,
     core.Core_Error,
-    Entity_Error,
+    Collection_Error,
 }
 
 ERROR_NONE :: Error{}
@@ -24,7 +26,7 @@ error_to_str :: proc (err: Error) -> (str: string) {
         case runtime.Allocator_Error:   str = enum_to_str(err.(runtime.Allocator_Error))
         case core.Error:                str = core.error_to_str(err.(core.Error))
         case core.Core_Error:           str = enum_to_str(err.(core.Core_Error))
-        case Entity_Error:              str = enum_to_str(err.(Entity_Error))
+        case Collection_Error:              str = enum_to_str(err.(Collection_Error))
     }
     return
 }

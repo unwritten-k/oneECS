@@ -54,13 +54,13 @@ database_entity_is_valid :: #force_inline proc (self: ^Database, ent: Entity_Id)
 }
 
 database_get_signature :: #force_inline proc (self: ^Database, ent: Entity_Id) -> (Component_Signature, Error) {
-    if !database_entity_is_valid(self, ent) do return nil, .Invalid_Entity
+    if !database_entity_is_valid(self, ent) do return nil, Collection_Error.Invalid_Entity
 
     return self.signatures[ent.idx], ERROR_NONE
 } 
 
 database_signature_add_component :: proc (self: ^Database, ent: Entity_Id, type_id: int) -> Error {
-    if !database_entity_is_valid(self, ent) do return Entity_Error.Invalid_Entity
+    if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
 
     self.signatures[ent.idx] += {type_id}
 
@@ -68,7 +68,7 @@ database_signature_add_component :: proc (self: ^Database, ent: Entity_Id, type_
 }
 
 database_signature_remove_component :: proc (self: ^Database, ent: Entity_Id, type_id: int) -> Error {
-    if !database_entity_is_valid(self, ent) do return Entity_Error.Invalid_Entity
+    if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
 
     self.signatures[ent.idx] -= {type_id}
 
@@ -76,7 +76,7 @@ database_signature_remove_component :: proc (self: ^Database, ent: Entity_Id, ty
 }
 
 database_signature_clear :: proc (self: ^Database, ent: Entity_Id) -> Error {
-    if !database_entity_is_valid(self, ent) do return Entity_Error.Invalid_Entity
+    if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
 
     self.signatures[ent.idx] = nil
 
