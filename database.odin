@@ -20,6 +20,9 @@ Database :: struct {
     entity_factory: core.Entity_Factory,
     
     signatures: [/*Entity ID*/]Component_Signature,
+
+    component_types_count: int,
+    idx_to_type: [COMPONENT_SIGNATURES_MAX]typeid // no need for allocation, since length will always be constant
 }
 
 database_init :: proc (self: ^Database, allocator: runtime.Allocator, max_entities:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> Error {
@@ -58,6 +61,16 @@ database_get_signature :: #force_inline proc (self: ^Database, ent: Entity_Id) -
 
     return self.signatures[ent.idx], ERROR_NONE
 } 
+
+@private
+database_register_type :: proc (self: ^Database, T: typeid) -> (int, Error) {
+    if self.component_types_count >= len(self.idx_to_type) do return -1, Collection_Error.Exceeded_Capacity
+
+    t_id := self.component_types_count
+    self.idx_to_type[t_id] = T
+
+    return t_id, ERROR_NONE
+}
 
 database_signature_add_component :: proc (self: ^Database, ent: Entity_Id, type_id: int) -> Error {
     if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
