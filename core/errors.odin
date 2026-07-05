@@ -11,7 +11,7 @@ Core_Error :: enum {
     Not_Found,
 }
 
-Error :: union {
+Error :: union #shared_nil {
     runtime.Allocator_Error,
     Core_Error,
 }
