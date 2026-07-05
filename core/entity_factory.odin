@@ -82,13 +82,13 @@ entity_factory_create_id :: proc (self: ^Entity_Factory) -> (id: Entity_Id, err:
     return
 }
 
-entity_factory_is_expired :: proc (self: ^Entity_Factory, id: Entity_Id) -> bool {
+entity_factory_is_expired :: #force_inline proc "contextless" (self: ^Entity_Factory, id: Entity_Id) -> bool {
     if id.idx < 0 || id.idx > self.capacity do return true
 
     return self.alive_ids[id.idx] != id
 }
 
-entity_factory_is_freed :: proc (self: ^Entity_Factory, id: Entity_Id) -> bool {
+entity_factory_is_freed :: #force_inline proc "contextless" (self: ^Entity_Factory, id: Entity_Id) -> bool {
     return self.alive_ids[id.idx].idx == INVALID_IDX
 }
 
