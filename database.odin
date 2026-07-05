@@ -22,7 +22,10 @@ Database :: struct {
     signatures: [/*Entity ID*/]Component_Signature,
 
     component_types_count: int,
-    idx_to_type: [COMPONENT_SIGNATURES_MAX]typeid // no need for allocation, since length will always be constant
+    idx_to_type: [COMPONENT_SIGNATURES_MAX]typeid, // no need for allocation, since length will always be constant
+
+    attached_tables_count: int,
+    attached_tables: [COMPONENT_SIGNATURES_MAX]^Basic_Table,
 }
 
 database_init :: proc (self: ^Database, allocator: runtime.Allocator, max_entities:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> Error {
@@ -33,6 +36,16 @@ database_init :: proc (self: ^Database, allocator: runtime.Allocator, max_entiti
     core.entity_factory_init(&self.entity_factory, max_entities, allocator, loc) or_return
 
     self.signatures = make([]Component_Signature, max_entities, allocator, loc) or_return
+
+    return ERROR_NONE
+}
+
+@private
+database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> Error {
+    if self.attached_tables_count >= len(self.attached_tables) do return Collection_Error.Exceeded_Capacity
+
+    self.attached_tables[self.attached_tables_count] = table
+    self.attached_tables_count += 1
 
     return ERROR_NONE
 }
@@ -97,6 +110,12 @@ database_signature_clear :: proc (self: ^Database, ent: Entity_Id) -> Error {
 }
 
 database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
+    for i in 0..<self.attached_tables_count {
+        table := self.attached_tables[i]
+        assert(table != nil) // sanity check
+        basic_table_free(table, loc) or_return
+    }
+
     core.entity_factory_free(&self.entity_factory, loc) or_return
     
     delete(self.signatures, self.allocator, loc) or_return

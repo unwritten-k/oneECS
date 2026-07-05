@@ -34,6 +34,8 @@ table_base_init :: proc (self: ^Table_Base, db: ^Database, capacity: int, loc:=#
         id = INVALID_ID
     }
 
+    database_attach_table(self.db, (^Basic_Table)(self))
+
     return ERROR_NONE
 }
 
@@ -190,7 +192,6 @@ table_test :: proc (_: ^testing.T) {
     table: Table(int)
     err = table_init(&table, &db, 32)
     assert(err == ERROR_NONE, error_to_str(err))
-    defer assert( table_free(&table) == ERROR_NONE )
 
     context.allocator = runtime.panic_allocator()
 
