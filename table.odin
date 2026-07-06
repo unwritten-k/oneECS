@@ -1,3 +1,4 @@
+#+private
 package one_ecs
 
 import "core:testing"
@@ -8,7 +9,6 @@ import core "core"
 @(private="file")
 INVALID_ID :: -1
 
-@private
 Table_Base :: struct {
     using basic: Basic_Table,
 
@@ -21,7 +21,6 @@ Table_Base :: struct {
     t_id: int,
 }
 
-@private
 table_base_init :: proc (self: ^Table_Base, db: ^Database, capacity: int, loc:=#caller_location) -> Error {
     self.db = db
     self.capacity = capacity
@@ -37,12 +36,10 @@ table_base_init :: proc (self: ^Table_Base, db: ^Database, capacity: int, loc:=#
     return ERROR_NONE
 }
 
-@private
 table_base_has_entity :: proc (self: ^Table_Base, ent: Entity_Id) -> bool {
     return self.entity_to_id[ent.idx] != INVALID_ID
 }
 
-@private
 table_base_free :: proc (self: ^Table_Base, loc:=#caller_location) -> Error {
     delete(self.entity_to_id, self.db.allocator, loc) or_return
 
@@ -57,7 +54,6 @@ Table_Bytes :: struct {
     bytes: []byte,
 }
 
-@private
 table_bytes_init :: proc (self: ^Table_Bytes, db: ^Database, capacity: int, type_info: ^runtime.Type_Info, loc:=#caller_location) -> Error {
     table_base_init(&self.base, db, capacity, loc) or_return
     
@@ -72,7 +68,6 @@ table_bytes_init :: proc (self: ^Table_Bytes, db: ^Database, capacity: int, type
     return ERROR_NONE
 }
 
-@private
 table_bytes_remove_component :: proc (self: ^Table_Bytes, ent: Entity_Id) -> Error {
     if !database_entity_is_valid(self.db, ent) do return Collection_Error.Invalid_Entity
     if !table_base_has_entity(&self.base, ent) do return Collection_Error.Entity_Not_Found
@@ -102,7 +97,6 @@ table_bytes_clear :: proc (self: ^Table_Bytes) {
     mem.zero(raw.data, raw.len)
 }
 
-@private
 table_bytes_free :: proc (self: ^Table_Bytes, loc:=#caller_location) -> Error {
     table_base_free(&self.base, loc) or_return
 
