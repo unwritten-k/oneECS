@@ -18,8 +18,6 @@ Table :: struct {
     components_count: int,
     bytes: []byte,
 
-    type_info: ^runtime.Type_Info,
-
     t_id: int,
 }
 

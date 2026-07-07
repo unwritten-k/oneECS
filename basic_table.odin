@@ -1,5 +1,7 @@
 package one_ecs
 
+import "base:runtime"
+
 Table_Type :: enum {
     Table,
     Tag_Table,
@@ -14,6 +16,7 @@ Basic_Table_Operation :: enum {
 
 Basic_Table :: struct {
     db: ^Database,
+    type_info: ^runtime.Type_Info,
     table_type: Table_Type,
     table_proc: proc (op:Basic_Table_Operation, table:^Basic_Table, entity:Entity_Id) -> (rawptr, Error)
 }
