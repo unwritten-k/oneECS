@@ -25,6 +25,8 @@ Table :: struct {
 
 table_init :: proc (self: ^Table, db: ^Database, capacity: int, type: typeid, loc:=#caller_location) -> Error {
     self.table_type = .Table
+    self.table_proc = table_proc
+
     self.db = db
     self.capacity = capacity
     
@@ -107,6 +109,18 @@ table_free :: proc (self: ^Table, loc:=#caller_location) -> Error {
     self.components_count = 0
 
     return ERROR_NONE
+}
+
+@private
+table_proc :: proc (op: Basic_Table_Operation, self: ^Basic_Table, entity: Entity_Id) -> (rawptr, Error) {
+    self := (^Table)(self)
+    switch op {
+        case .Add:      return table_add_component(self, entity)
+        case .Remove:   return nil, table_remove_component(self, entity)
+        case .Get:      return table_get_component(self, entity)
+        case .Clear:    table_clear(self)
+    }
+    return nil, ERROR_NONE
 }
 
 @test
