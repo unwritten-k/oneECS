@@ -285,4 +285,14 @@ database_test :: proc (_: ^testing.T) {
     invalid_entity: Entity_Id
     invalid_entity, err = database_create_entity(&db)
     assert(err != ERROR_NONE, "No error after exceeding entity capacity")
+
+    db.entity_factory.alive_ids[0].gen = 0 // for testing purposes, do not do that in production code
+    for i in 0..<db.max_entities {
+        database_destroy_entity(&db, Entity_Id{idx=i})
+    }
+
+    // try creating id (which should be reused)
+    entity, err = database_create_entity(&db)
+    assert(err == ERROR_NONE, error_to_str(err))
+    assert(entity.gen == 1, "Entity generation is not equal to 1, even if it was reused.")
 }
