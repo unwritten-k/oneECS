@@ -21,18 +21,22 @@ Database :: struct {
     
     signatures: [/*Entity ID*/]Component_Signature,
 
+    table_capacity: int,
     attached_tables_count: int,
+    typeid_to_tid: map[typeid]int,
     tid_to_table: [COMPONENT_SIGNATURES_MAX]^Basic_Table,
 }
 
-database_init :: proc (self: ^Database, allocator: runtime.Allocator, max_entities:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> Error {
+database_init :: proc (self: ^Database, allocator: runtime.Allocator, table_capacity:=DEFAULT_MAX_ENTITIES, max_entities:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> Error {
 
     self.allocator = allocator
     self.max_entities = max_entities
+    self.table_capacity = table_capacity
 
     core.entity_factory_init(&self.entity_factory, max_entities, allocator, loc) or_return
 
     self.signatures = make([]Component_Signature, max_entities, allocator, loc) or_return
+    self.typeid_to_tid = make(map[typeid]int, COMPONENT_SIGNATURES_MAX, allocator, loc) or_return
 
     return ERROR_NONE
 }
@@ -43,9 +47,24 @@ database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> (int, Er
 
     tid := self.attached_tables_count
     self.tid_to_table[tid] = table
+    self.typeid_to_tid[table.type_info.id] = tid
     self.attached_tables_count += 1
 
     return tid, ERROR_NONE
+}
+
+database_register_component :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
+    if type_id in self.typeid_to_tid do return .Already_Added
+
+    table: ^Table = new(Table, self.allocator, loc) or_return
+    // automatically attached
+    table_init(table, self, self.table_capacity, type_id, loc) or_return
+
+    return ERROR_NONE
+}
+
+database_register_tag :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
+    unimplemented("Tag table are not implemented yet")
 }
 
 database_create_entity :: #force_inline proc (self: ^Database) -> (ent: Entity_Id, err: Error) {
@@ -102,11 +121,13 @@ database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
         table := self.tid_to_table[i]
         assert(table != nil) // sanity check
         basic_table_free(table, loc) or_return
+        free(table, self.allocator, loc) or_return
     }
 
     core.entity_factory_free(&self.entity_factory, loc) or_return
     
     delete(self.signatures, self.allocator, loc) or_return
+    delete(self.typeid_to_tid, loc) or_return
 
     return ERROR_NONE
 }
