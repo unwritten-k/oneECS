@@ -72,6 +72,12 @@ database_create_entity :: #force_inline proc (self: ^Database) -> (ent: Entity_I
 }
 
 database_destroy_entity :: #force_inline proc (self: ^Database, ent: Entity_Id) -> Error {
+    signature := self.signatures[ent.idx]
+    for bit in signature {
+        table := self.tid_to_table[bit]
+        basic_table_remove(table, ent)
+    }
+
     err := core.entity_factory_free_id(&self.entity_factory, ent)
     if err != core.ERROR_NONE do return err
 
@@ -117,6 +123,41 @@ database_signature_clear :: proc (self: ^Database, ent: Entity_Id) -> Error {
     self.signatures[ent.idx] = nil
 
     return ERROR_NONE
+}
+
+database_add_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) -> (^T, Error) {
+    if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
+    if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
+
+    table := self.tid_to_table[self.typeid_to_tid[T]]
+    assert(table != nil) // sanity check
+    
+    component, err := basic_table_add(table, entity)
+    if err != ERROR_NONE do return nil, err
+
+    return cast(^T)component, ERROR_NONE
+}
+
+database_remove_component :: proc (self: ^Database, entity: Entity_Id, T: typeid) -> Error {
+    if !database_entity_is_valid(self, entity) do return Collection_Error.Invalid_Entity
+    if T not_in self.typeid_to_tid do return Registry_Error.Not_Registered
+
+    table := self.tid_to_table[self.typeid_to_tid[T]]
+    assert(table != nil) // sanity check
+    return basic_table_remove(table, entity)
+}
+
+database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) -> (rawptr, Error) {
+    if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
+    if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
+
+    table := self.tid_to_table[self.typeid_to_tid[T]]
+    assert(table != nil) // sanity check
+
+    component, err := basic_table_get(table, entity)
+    if err != ERROR_NONE do return nil, err
+
+    return cast(^T)component, ERROR_NONE
 }
 
 database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
@@ -165,15 +206,29 @@ database_test :: proc (_: ^testing.T) {
     assert(db.tid_to_table[1] != nil, "Second registered table shows as nil in array")
     assert(db.typeid_to_tid[Some_Other_Type] == 1, "Typeid 'Some_Other_Type' points to wrong table id")
 
-    // sign: Component_Signature
-    // sign, err = database_get_signature(&db, entity)
-    // assert(err == ERROR_NONE, error_to_str(err))
-    // assert(sign == {0, 1})
+    some_data: ^Some_Type
+    some_data, err = database_add_component(&db, entity, Some_Type)
+    assert(err == ERROR_NONE, error_to_str(err))
+
+    some_data.num = 120
+
+    some_other_data: ^Some_Other_Type
+    some_other_data, err = database_add_component(&db, entity, Some_Other_Type)
+    assert(err == ERROR_NONE, error_to_str(err))
+
+    some_other_data.str = "hello world"
+
+    sign: Component_Signature
+    sign, err = database_get_signature(&db, entity)
+    assert(err == ERROR_NONE, error_to_str(err))
+    assert(sign == {0, 1})
 
     err = database_destroy_entity(&db, entity)
     assert(err == ERROR_NONE, error_to_str(err))
 
     assert(db.signatures[entity.idx] == nil)
+    assert(some_data^ == Some_Type{})
+    assert(some_other_data^ == Some_Other_Type{})
 
     for i in 0..<db.max_entities {
         database_create_entity(&db)
