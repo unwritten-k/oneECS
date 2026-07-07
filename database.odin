@@ -92,6 +92,7 @@ database_get_signature :: #force_inline proc (self: ^Database, ent: Entity_Id) -
     return self.signatures[ent.idx], ERROR_NONE
 }
 
+@private
 database_signature_add_component :: proc (self: ^Database, ent: Entity_Id, type_id: int) -> Error {
     if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
 
@@ -100,6 +101,7 @@ database_signature_add_component :: proc (self: ^Database, ent: Entity_Id, type_
     return ERROR_NONE
 }
 
+@private
 database_signature_remove_component :: proc (self: ^Database, ent: Entity_Id, type_id: int) -> Error {
     if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
 
@@ -108,6 +110,7 @@ database_signature_remove_component :: proc (self: ^Database, ent: Entity_Id, ty
     return ERROR_NONE
 }
 
+@private
 database_signature_clear :: proc (self: ^Database, ent: Entity_Id) -> Error {
     if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
 
