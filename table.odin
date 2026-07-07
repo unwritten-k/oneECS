@@ -6,6 +6,8 @@ import "core:mem"
 import "base:runtime"
 import core "core"
 
+////////////////// DEFINITIONS
+
 @(private="file")
 INVALID_ID :: -1
 
@@ -21,6 +23,8 @@ Table :: struct {
     t_id: int,
 }
 
+// Allocates table's data using database's allocator
+// and attaches it to the database.
 table_init :: proc (self: ^Table, db: ^Database, capacity: int, type: typeid, loc:=#caller_location) -> Error {
     self.table_type = .Table
     self.table_proc = table_proc
@@ -40,6 +44,13 @@ table_init :: proc (self: ^Table, db: ^Database, capacity: int, type: typeid, lo
     return ERROR_NONE
 }
 
+
+////////////////// TABLE OPERATIONS
+
+
+// Links component ID to entity and
+// returns pointer to bytes on that ID.
+// Can fail if entity is invalid or entity already has that component
 table_add_component :: proc (self: ^Table, ent: Entity_Id) -> (rawptr, Error) {
     if !database_entity_is_valid(self.db, ent) do return nil, Collection_Error.Invalid_Entity
     if table_has_entity(self, ent) do return nil, Collection_Error.Already_Added
@@ -60,6 +71,9 @@ table_add_component :: proc (self: ^Table, ent: Entity_Id) -> (rawptr, Error) {
     return raw_data(slice), ERROR_NONE
 }
 
+// Marks given entity's ID as invalid
+// and zeroes component at that ID.
+// Can fail if entity is invalid or entity does not have that component
 table_remove_component :: proc (self: ^Table, ent: Entity_Id) -> Error {
     if !database_entity_is_valid(self.db, ent) do return Collection_Error.Invalid_Entity
     if !table_has_entity(self, ent) do return Collection_Error.Entity_Not_Found
@@ -75,6 +89,8 @@ table_remove_component :: proc (self: ^Table, ent: Entity_Id) -> Error {
     return ERROR_NONE
 }
 
+// Returns pointer to bytes on ID linked to entity.
+// Can fail if entity is invalid or entity does not have that component
 table_get_component :: proc (self: ^Table, ent: Entity_Id) -> (rawptr, Error) {
     if !database_entity_is_valid(self.db, ent) do return nil, Collection_Error.Invalid_Entity
     if !table_has_entity(self, ent) do return nil, Collection_Error.Entity_Not_Found
@@ -84,6 +100,7 @@ table_get_component :: proc (self: ^Table, ent: Entity_Id) -> (rawptr, Error) {
     return raw_data(slice), ERROR_NONE
 }
 
+// Clear the table
 table_clear :: proc (self: ^Table) {
     for &id in self.entity_to_id {
         id = INVALID_ID
@@ -93,10 +110,14 @@ table_clear :: proc (self: ^Table) {
     mem.zero(raw_data(self.bytes), len(self.bytes))
 }
 
+// Returns true, if entity's ID is valid
 table_has_entity :: proc (self: ^Table, ent: Entity_Id) -> bool {
     return self.entity_to_id[ent.idx] != INVALID_ID
 }
 
+////////////////// TABLE FREEING
+
+// Frees table's data. Database frees it's tables automatically
 table_free :: proc (self: ^Table, loc:=#caller_location) -> Error {
 
     delete(self.entity_to_id, self.db.allocator, loc)
@@ -109,6 +130,7 @@ table_free :: proc (self: ^Table, loc:=#caller_location) -> Error {
     return ERROR_NONE
 }
 
+// Abstraction for Basic_Table
 @private
 table_proc :: proc (op: Basic_Table_Operation, self: ^Basic_Table, entity: Entity_Id) -> (rawptr, Error) {
     self := (^Table)(self)
@@ -141,6 +163,7 @@ table_test :: proc (_: ^testing.T) {
 
     entity, _ := database_create_entity(&db)
 
+    // add component to entity
     comp_ptr: rawptr
     comp_ptr, err = table_add_component(table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
@@ -150,12 +173,14 @@ table_test :: proc (_: ^testing.T) {
 
     component^ = 15
 
+    // check if retreived component is the same as the above
     comp_ptr, err = table_get_component(table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
     component = cast(^int)comp_ptr
     assert(component^ == 15)
 
+    // remove component
     err = table_remove_component(table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
-    assert(component^ == 0)
+    assert(component^ == 0) // check if component is actually zeroed
 }
