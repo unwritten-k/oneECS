@@ -121,6 +121,16 @@ database_get_signature :: #force_inline proc (self: ^Database, ent: Entity_Id) -
     return self.signatures[ent.idx], ERROR_NONE
 }
 
+// Constructs signature from given type ids. This function asserts that typeid is registered
+database_make_signature :: #force_inline proc (self: ^Database, types: ..typeid) -> Component_Signature {
+    sign: Component_Signature
+    for t in types {
+        assert(t in self.typeid_to_tid) // sanity check
+        sign += {self.typeid_to_tid[t]}
+    }
+    return sign
+}
+
 @private
 database_signature_add_component :: proc (self: ^Database, ent: Entity_Id, type_id: int) -> Error {
     if !database_entity_is_valid(self, ent) do return Collection_Error.Invalid_Entity
