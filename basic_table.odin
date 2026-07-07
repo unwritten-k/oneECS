@@ -12,7 +12,7 @@ Basic_Table :: struct {
 
 basic_table_free :: proc (self: ^Basic_Table, loc:=#caller_location) -> Error {
     switch self.table_type {
-        case .Table: table_bytes_free( (^Table_Bytes)(self), loc )
+        case .Table: table_free( (^Table)(self), loc )
         case .Tag_Table: unimplemented("Tag Tables are not implemented yet")
     }
 
