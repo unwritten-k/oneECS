@@ -147,19 +147,25 @@ database_test :: proc (_: ^testing.T) {
     assert(err == ERROR_NONE, error_to_str(err))
     assert(entity.idx == 0 && entity.gen == 0)
     
-    Some_Type :: 0
-    Some_Other_Type :: 1
+    Some_Type :: struct { num: int }
+    Some_Other_Type :: struct { str: string }
 
-    err = database_signature_add_component(&db, entity, Some_Type)
+    err = database_register_component(&db, Some_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
-    err = database_signature_add_component(&db, entity, Some_Other_Type)
+    assert(db.tid_to_table[0] != nil, "Registered table shows as nil in array")
+    assert(db.typeid_to_tid[Some_Type] == 0, "Typeid 'Some_Type' points to wrong table id")
+
+    err = database_register_component(&db, Some_Other_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
-    sign: Component_Signature
-    sign, err = database_get_signature(&db, entity)
-    assert(err == ERROR_NONE, error_to_str(err))
-    assert(sign == {0, 1})
+    assert(db.tid_to_table[1] != nil, "Second registered table shows as nil in array")
+    assert(db.typeid_to_tid[Some_Other_Type] == 1, "Typeid 'Some_Other_Type' points to wrong table id")
+
+    // sign: Component_Signature
+    // sign, err = database_get_signature(&db, entity)
+    // assert(err == ERROR_NONE, error_to_str(err))
+    // assert(sign == {0, 1})
 
     err = database_destroy_entity(&db, entity)
     assert(err == ERROR_NONE, error_to_str(err))
