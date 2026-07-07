@@ -4,6 +4,9 @@ import "core:testing"
 import "base:runtime"
 import core "core"
 
+////////////////// DEFINITIONS
+
+
 Entity_Id :: core.Entity_Id
 INVALID_ENTITY_IDX :: core.INVALID_IDX
 
@@ -13,6 +16,7 @@ Component_Signature :: bit_set[0..<COMPONENT_SIGNATURES_MAX; u64]
 
 DEFAULT_MAX_ENTITIES :: 1024
 
+// Stores entities and attached tables. It is main data storage of OneECS
 Database :: struct {
     allocator: runtime.Allocator,
     
@@ -27,6 +31,7 @@ Database :: struct {
     tid_to_table: [COMPONENT_SIGNATURES_MAX]^Basic_Table,
 }
 
+// Initializes database with given allocator
 database_init :: proc (self: ^Database, allocator: runtime.Allocator, table_capacity:=DEFAULT_MAX_ENTITIES, max_entities:=DEFAULT_MAX_ENTITIES, loc:=#caller_location) -> Error {
 
     self.allocator = allocator
@@ -41,6 +46,11 @@ database_init :: proc (self: ^Database, allocator: runtime.Allocator, table_capa
     return ERROR_NONE
 }
 
+////////////////// REGISTRY
+
+
+// Attaches table to database, this function is called
+// from tables themselves after they are initialized
 @private
 database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> (int, Error) {
     if self.attached_tables_count >= len(self.tid_to_table) do return 0, Collection_Error.Exceeded_Capacity
@@ -53,6 +63,7 @@ database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> (int, Er
     return tid, ERROR_NONE
 }
 
+// Allocates new table and registers it under the given type. Can fail if given type is already registered
 database_register_component :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
     if type_id in self.typeid_to_tid do return Registry_Error.Already_Registered
 
@@ -63,14 +74,21 @@ database_register_component :: proc (self: ^Database, type_id: typeid, loc:=#cal
     return ERROR_NONE
 }
 
+// Allocates new tag table, that only stores boolean if entity has component or not,
+// and registers it under the given type. Can fail if given type is already registered
 database_register_tag :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
     unimplemented("Tag table are not implemented yet")
 }
 
+////////////////// ENTITY OPERATIONS
+
+
+// Creates new entity id. Can fail if there's an internal error
 database_create_entity :: #force_inline proc (self: ^Database) -> (ent: Entity_Id, err: Error) {
     return core.entity_factory_create_id(&self.entity_factory) 
 }
 
+// Destroys entity id, and clears it's components and signature. Can fail if there's an internal error
 database_destroy_entity :: #force_inline proc (self: ^Database, ent: Entity_Id) -> Error {
     signature := self.signatures[ent.idx]
     for bit in signature {
@@ -86,12 +104,17 @@ database_destroy_entity :: #force_inline proc (self: ^Database, ent: Entity_Id) 
     return ERROR_NONE
 }
 
+// Returns if given entity id is in database's bounds, not freed, and not expired.
 database_entity_is_valid :: #force_inline proc (self: ^Database, ent: Entity_Id) -> bool {
     return (ent.idx >= 0 && ent.idx < self.max_entities) \ 
         && !core.entity_factory_is_freed(&self.entity_factory, ent) \
         && !core.entity_factory_is_expired(&self.entity_factory, ent)
 }
 
+////////////////// SIGNATURE OPERATIONS
+
+
+// Returns signature of entity. Can fail if entity is invalid
 database_get_signature :: #force_inline proc (self: ^Database, ent: Entity_Id) -> (Component_Signature, Error) {
     if !database_entity_is_valid(self, ent) do return nil, Collection_Error.Invalid_Entity
 
@@ -125,6 +148,10 @@ database_signature_clear :: proc (self: ^Database, ent: Entity_Id) -> Error {
     return ERROR_NONE
 }
 
+////////////////// COMPONENT OPERATIONS
+
+
+// Adds component to given entity. Can fail if entity is invalid or given type is not registered
 database_add_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) -> (^T, Error) {
     if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
     if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
@@ -138,6 +165,7 @@ database_add_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
     return cast(^T)component, ERROR_NONE
 }
 
+// Removes component from given entity. Can fail if entity is invalid or given type is not registered
 database_remove_component :: proc (self: ^Database, entity: Entity_Id, T: typeid) -> Error {
     if !database_entity_is_valid(self, entity) do return Collection_Error.Invalid_Entity
     if T not_in self.typeid_to_tid do return Registry_Error.Not_Registered
@@ -147,6 +175,7 @@ database_remove_component :: proc (self: ^Database, entity: Entity_Id, T: typeid
     return basic_table_remove(table, entity)
 }
 
+// Returns component of given entity. Can fail if entity is invalid or given type is not registered
 database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) -> (rawptr, Error) {
     if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
     if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
@@ -160,6 +189,10 @@ database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
     return cast(^T)component, ERROR_NONE
 }
 
+////////////////// DATABASE FREEING
+
+
+// Frees database and it's attached tables
 database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
     for i in 0..<self.attached_tables_count {
         table := self.tid_to_table[i]
@@ -176,64 +209,79 @@ database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
     return ERROR_NONE
 }
 
+////////////////// TESTS
+
+
 @test
 database_test :: proc (_: ^testing.T) {
     err: Error
 
+    // init database
     db: Database
     err = database_init(&db, context.allocator)
     assert(err == ERROR_NONE, error_to_str(err))
     defer assert(database_free(&db) == ERROR_NONE, error_to_str(err))
 
+    // create entity
     entity: Entity_Id
 
     entity, err = database_create_entity(&db)
     assert(err == ERROR_NONE, error_to_str(err))
     assert(entity.idx == 0 && entity.gen == 0)
     
+    // register two component types
     Some_Type :: struct { num: int }
     Some_Other_Type :: struct { str: string }
 
+    // --   first
     err = database_register_component(&db, Some_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
     assert(db.tid_to_table[0] != nil, "Registered table shows as nil in array")
     assert(db.typeid_to_tid[Some_Type] == 0, "Typeid 'Some_Type' points to wrong table id")
 
+    // --   second
     err = database_register_component(&db, Some_Other_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
     assert(db.tid_to_table[1] != nil, "Second registered table shows as nil in array")
     assert(db.typeid_to_tid[Some_Other_Type] == 1, "Typeid 'Some_Other_Type' points to wrong table id")
 
+    // add first component to the entity
     some_data: ^Some_Type
     some_data, err = database_add_component(&db, entity, Some_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
     some_data.num = 120
 
+    // add second component to the entity
     some_other_data: ^Some_Other_Type
     some_other_data, err = database_add_component(&db, entity, Some_Other_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
     some_other_data.str = "hello world"
 
+    // check validity of signature
     sign: Component_Signature
     sign, err = database_get_signature(&db, entity)
     assert(err == ERROR_NONE, error_to_str(err))
-    assert(sign == {0, 1})
+    assert(sign == {0, 1}) // it should contain two components, with IDs 0 and 1
 
+    // destroy entity
     err = database_destroy_entity(&db, entity)
     assert(err == ERROR_NONE, error_to_str(err))
 
+    // check that destroyed entity's data became invalid 
     assert(db.signatures[entity.idx] == nil)
     assert(some_data^ == Some_Type{})
     assert(some_other_data^ == Some_Other_Type{})
 
+    // test database limits
     for i in 0..<db.max_entities {
         database_create_entity(&db)
     }
 
+    // try creating id, when there are max entities used
     invalid_entity: Entity_Id
     invalid_entity, err = database_create_entity(&db)
     assert(err != ERROR_NONE, "No error after exceeding entity capacity")
