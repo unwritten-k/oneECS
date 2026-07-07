@@ -54,7 +54,7 @@ database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> (int, Er
 }
 
 database_register_component :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
-    if type_id in self.typeid_to_tid do return .Already_Added
+    if type_id in self.typeid_to_tid do return Collection_Error.Already_Added
 
     table: ^Table = new(Table, self.allocator, loc) or_return
     // automatically attached
