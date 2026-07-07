@@ -130,8 +130,11 @@ table_test :: proc (_: ^testing.T) {
 
     err: Error
 
-    table: Table
-    err = table_init(&table, &db, 32, int)
+    // allocation on heap is required to hide 'bad free' warning
+    // (database tries to free table pointer, 
+    // but if it's allocated on stack, bad free warning is shown)
+    table: ^Table = new(Table, db.allocator)
+    err = table_init(table, &db, 32, int)
     assert(err == ERROR_NONE, error_to_str(err))
 
     context.allocator = runtime.panic_allocator()
@@ -139,7 +142,7 @@ table_test :: proc (_: ^testing.T) {
     entity, _ := database_create_entity(&db)
 
     comp_ptr: rawptr
-    comp_ptr, err = table_add_component(&table, entity)
+    comp_ptr, err = table_add_component(table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
 
     component := cast(^int)comp_ptr
@@ -147,12 +150,12 @@ table_test :: proc (_: ^testing.T) {
 
     component^ = 15
 
-    comp_ptr, err = table_get_component(&table, entity)
+    comp_ptr, err = table_get_component(table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
     component = cast(^int)comp_ptr
     assert(component^ == 15)
 
-    err = table_remove_component(&table, entity)
+    err = table_remove_component(table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
     assert(component^ == 0)
 }
