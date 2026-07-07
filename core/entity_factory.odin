@@ -16,7 +16,7 @@ Entity_Factory :: struct {
 
     capacity: int,
     alive_ids: []Entity_Id,
-    alive_count: int,
+    created_count: int,
 
     freed_ids: []int,
     freed_count: int,
@@ -42,13 +42,13 @@ entity_factory_clear :: proc (self: ^Entity_Factory) {
         self.freed_ids[i] = INVALID_IDX
     }
 
-    self.alive_count = 0
+    self.created_count = 0
     self.freed_count = 0
 }
 
 entity_factory_create_id :: proc (self: ^Entity_Factory) -> (id: Entity_Id, err: Error) {
 
-    if self.alive_count >= self.capacity {
+    if entity_factory_len(self) >= self.capacity {
         id.idx = INVALID_IDX
         err = .Exceeded_Capacity
         return
@@ -70,13 +70,13 @@ entity_factory_create_id :: proc (self: ^Entity_Factory) -> (id: Entity_Id, err:
 
     }
     else {
-        id_ptr = &self.alive_ids[self.alive_count]
+        id_ptr = &self.alive_ids[self.created_count]
 
-        id_ptr.idx = self.alive_count
+        id_ptr.idx = self.created_count
 
         id = id_ptr^
 
-        self.alive_count += 1
+        self.created_count += 1
     }
 
     return
@@ -90,6 +90,10 @@ entity_factory_is_expired :: #force_inline proc "contextless" (self: ^Entity_Fac
 
 entity_factory_is_freed :: #force_inline proc "contextless" (self: ^Entity_Factory, id: Entity_Id) -> bool {
     return self.alive_ids[id.idx].idx == INVALID_IDX
+}
+
+entity_factory_len :: #force_inline proc "contextless" (self: ^Entity_Factory) -> int {
+    return self.created_count - self.freed_count
 }
 
 entity_factory_free_id :: proc (self: ^Entity_Factory, id: Entity_Id) -> Error {
@@ -109,7 +113,7 @@ entity_factory_free :: proc (self: ^Entity_Factory, loc:=#caller_location) -> Er
     delete(self.alive_ids, self.allocator, loc) or_return
     delete(self.freed_ids, self.allocator, loc) or_return
     
-    self.alive_count = 0
+    self.created_count = 0
     self.freed_count = 0
     self.capacity = 0
     
