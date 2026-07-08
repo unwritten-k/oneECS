@@ -2,46 +2,25 @@ package one_ecs
 
 import "base:runtime"
 
-Table_Type :: enum {
-    Table,
-    Tag_Table,
-}
-
-Basic_Table_Operation :: enum {
-    Add,
-    Remove,
-    Get,
-    Clear,
-}
+Tag_Table :: struct {}
 
 Basic_Table :: struct {
-    db: ^Database,
     type_info: ^runtime.Type_Info,
-    table_type: Table_Type,
-    table_proc: proc (op:Basic_Table_Operation, table:^Basic_Table, entity:Entity_Id) -> (rawptr, Error)
-}
-
-basic_table_add :: proc (self: ^Basic_Table, entity: Entity_Id) -> (rawptr, Error) {
-    return self.table_proc(.Add, self, entity)
+    variant: union {Table, Tag_Table}
 }
 
 basic_table_remove :: proc (self: ^Basic_Table, entity: Entity_Id) -> Error {
-    _, err := self.table_proc(.Remove, self, entity)
-    return err
-}
-
-basic_table_get :: proc (self: ^Basic_Table, entity: Entity_Id) -> (rawptr, Error) {
-    return self.table_proc(.Get, self, entity)
-}
-
-basic_table_clear :: proc (self: ^Basic_Table) {
-    self.table_proc(.Clear, self, Entity_Id{})
+    switch t in self.variant {
+        case Table: return table_remove_component(&self.variant.(Table), entity)
+        case Tag_Table: unimplemented("Tag tables are not implemented yet")
+    }
+    return ERROR_NONE
 }
 
 basic_table_free :: proc (self: ^Basic_Table, loc:=#caller_location) -> Error {
-    switch self.table_type {
-        case .Table: table_free( (^Table)(self), loc )
-        case .Tag_Table: unimplemented("Tag Tables are not implemented yet")
+    switch t in self.variant {
+        case Table: table_free(&self.variant.(Table))
+        case Tag_Table: unimplemented("Tag tables are not implemented yet")
     }
 
     return ERROR_NONE

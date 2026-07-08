@@ -28,7 +28,7 @@ Database :: struct {
     table_capacity: int,
     attached_tables_count: int,
     typeid_to_tid: map[typeid]int,
-    tid_to_table: [COMPONENT_SIGNATURES_MAX]^Basic_Table,
+    tid_to_table: [COMPONENT_SIGNATURES_MAX]Basic_Table,
 
     queried_entities: []Entity_Id,
 }
@@ -53,27 +53,24 @@ database_init :: proc (self: ^Database, allocator: runtime.Allocator, table_capa
 ////////////////// REGISTRY
 
 
-// Attaches table to database, this function is called
-// from tables themselves after they are initialized
-@private
-database_attach_table :: proc (self: ^Database, table: ^Basic_Table) -> (int, Error) {
-    if self.attached_tables_count >= len(self.tid_to_table) do return 0, Collection_Error.Exceeded_Capacity
-
-    tid := self.attached_tables_count
-    self.tid_to_table[tid] = table
-    self.typeid_to_tid[table.type_info.id] = tid
-    self.attached_tables_count += 1
-
-    return tid, ERROR_NONE
-}
-
 // Allocates new table and registers it under the given type. Can fail if given type is already registered
 database_register_component :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
     if type_id in self.typeid_to_tid do return Registry_Error.Already_Registered
+    if self.attached_tables_count >= len(self.tid_to_table) do return Collection_Error.Exceeded_Capacity
 
-    table: ^Table = new(Table, self.allocator, loc) or_return
-    // automatically attached
+    basic_table := Basic_Table{variant=Table{}}
+    table := &basic_table.variant.(Table)
     table_init(table, self, self.table_capacity, type_id, loc) or_return
+
+    basic_table.type_info = table.type_info
+
+    // attach the table
+    tid := self.attached_tables_count
+    table.t_id = tid
+
+    self.tid_to_table[tid] = basic_table
+    self.typeid_to_tid[table.type_info.id] = tid
+    self.attached_tables_count += 1
 
     return ERROR_NONE
 }
@@ -97,7 +94,7 @@ database_destroy_entity :: #force_inline proc (self: ^Database, ent: Entity_Id) 
     signature := self.signatures[ent.idx]
     for bit in signature {
         table := self.tid_to_table[bit]
-        basic_table_remove(table, ent)
+        basic_table_remove(&table, ent)
     }
 
     err := core.entity_factory_free_id(&self.entity_factory, ent)
@@ -170,10 +167,12 @@ database_add_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
     if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
     if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
 
-    table := self.tid_to_table[self.typeid_to_tid[T]]
-    assert(table != nil) // sanity check
-    
-    component, err := basic_table_add(table, entity)
+    basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
+
+    table, ok := &basic_table.variant.(Table)
+    if !ok do return nil, Registry_Error.Wrong_Table_Type
+
+    component, err := table_add_component(&basic_table.variant.(Table), entity)
     if err != ERROR_NONE do return nil, err
 
     return cast(^T)component, ERROR_NONE
@@ -184,9 +183,8 @@ database_remove_component :: proc (self: ^Database, entity: Entity_Id, T: typeid
     if !database_entity_is_valid(self, entity) do return Collection_Error.Invalid_Entity
     if T not_in self.typeid_to_tid do return Registry_Error.Not_Registered
 
-    table := self.tid_to_table[self.typeid_to_tid[T]]
-    assert(table != nil) // sanity check
-    return basic_table_remove(table, entity)
+    basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
+    return basic_table_remove(basic_table, entity)
 }
 
 // Returns component of given entity. Can fail if entity is invalid or given type is not registered
@@ -194,10 +192,12 @@ database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
     if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
     if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
 
-    table := self.tid_to_table[self.typeid_to_tid[T]]
-    assert(table != nil) // sanity check
+    basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
 
-    component, err := basic_table_get(table, entity)
+    table, ok := &basic_table.variant.(Table)
+    if !ok do return nil, Registry_Error.Wrong_Table_Type
+
+    component, err := table_get_component(&basic_table.variant.(Table), entity)
     if err != ERROR_NONE do return nil, err
 
     return cast(^T)component, ERROR_NONE
@@ -244,9 +244,7 @@ database_query :: proc (self: ^Database, include: Component_Signature, exclude:=
 database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
     for i in 0..<self.attached_tables_count {
         table := self.tid_to_table[i]
-        assert(table != nil) // sanity check
-        basic_table_free(table, loc) or_return
-        free(table, self.allocator, loc) or_return
+        basic_table_free(&table, loc) or_return
     }
 
     core.entity_factory_free(&self.entity_factory, loc) or_return
@@ -286,14 +284,12 @@ database_test :: proc (_: ^testing.T) {
     err = database_register_component(&db, Some_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
-    assert(db.tid_to_table[0] != nil, "Registered table shows as nil in array")
     assert(db.typeid_to_tid[Some_Type] == 0, "Typeid 'Some_Type' points to wrong table id")
 
     // --   second
     err = database_register_component(&db, Some_Other_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
-    assert(db.tid_to_table[1] != nil, "Second registered table shows as nil in array")
     assert(db.typeid_to_tid[Some_Other_Type] == 1, "Typeid 'Some_Other_Type' points to wrong table id")
 
     // add first component to the entity

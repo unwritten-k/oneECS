@@ -16,6 +16,7 @@ Registry_Error :: enum {
     None=0,
     Already_Registered,
     Not_Registered,
+    Wrong_Table_Type,
 }
 
 Error :: union #shared_nil {

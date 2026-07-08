@@ -12,7 +12,8 @@ import core "core"
 INVALID_ID :: -1
 
 Table :: struct {
-    using basic: Basic_Table,
+    db: ^Database,
+    type_info: ^runtime.Type_Info,
 
     capacity: int,
     entity_to_id: [/*Entity*/]int,
@@ -23,11 +24,8 @@ Table :: struct {
     t_id: int,
 }
 
-// Allocates table's data using database's allocator
-// and attaches it to the database.
+// Allocates table's data using database's allocator.
 table_init :: proc (self: ^Table, db: ^Database, capacity: int, type: typeid, loc:=#caller_location) -> Error {
-    self.table_type = .Table
-    self.table_proc = table_proc
 
     self.db = db
     self.capacity = capacity
@@ -36,8 +34,6 @@ table_init :: proc (self: ^Table, db: ^Database, capacity: int, type: typeid, lo
     
     self.entity_to_id = make([]int, db.max_entities, db.allocator, loc) or_return
     self.bytes = make([]byte, capacity*self.type_info.size, db.allocator, loc) or_return
-
-    self.t_id = database_attach_table(self.db, (^Basic_Table)(self)) or_return
 
     table_clear(self)
 
@@ -128,19 +124,6 @@ table_free :: proc (self: ^Table, loc:=#caller_location) -> Error {
     self.components_count = 0
 
     return ERROR_NONE
-}
-
-// Abstraction for Basic_Table
-@private
-table_proc :: proc (op: Basic_Table_Operation, self: ^Basic_Table, entity: Entity_Id) -> (rawptr, Error) {
-    self := (^Table)(self)
-    switch op {
-        case .Add:      return table_add_component(self, entity)
-        case .Remove:   return nil, table_remove_component(self, entity)
-        case .Get:      return table_get_component(self, entity)
-        case .Clear:    table_clear(self)
-    }
-    return nil, ERROR_NONE
 }
 
 @test
