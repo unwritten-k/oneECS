@@ -55,7 +55,7 @@ table_add_component :: proc (self: ^Table, ent: Entity_Id) -> (rawptr, Error) {
     if !database_entity_is_valid(self.db, ent) do return nil, Collection_Error.Invalid_Entity
     if table_has_entity(self, ent) do return nil, Collection_Error.Already_Added
 
-    id := self.components_count
+    id := self.components_count * self.type_info.size
     self.entity_to_id[ent.idx] = id
 
     slice := self.bytes[id : id+self.type_info.size]
