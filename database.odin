@@ -186,7 +186,7 @@ database_remove_component :: proc (self: ^Database, entity: Entity_Id, T: typeid
 }
 
 // Returns component of given entity. Can fail if entity is invalid or given type is not registered
-database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) -> (rawptr, Error) {
+database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) -> (^T, Error) {
     if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
     if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
 
