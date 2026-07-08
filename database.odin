@@ -29,6 +29,8 @@ Database :: struct {
     attached_tables_count: int,
     typeid_to_tid: map[typeid]int,
     tid_to_table: [COMPONENT_SIGNATURES_MAX]^Basic_Table,
+
+    queried_entities: []Entity_Id,
 }
 
 // Initializes database with given allocator
@@ -42,6 +44,8 @@ database_init :: proc (self: ^Database, allocator: runtime.Allocator, table_capa
 
     self.signatures = make([]Component_Signature, max_entities, allocator, loc) or_return
     self.typeid_to_tid = make(map[typeid]int, COMPONENT_SIGNATURES_MAX, allocator, loc) or_return
+
+    self.queried_entities = make([]Entity_Id, max_entities, allocator, loc) or_return
 
     return ERROR_NONE
 }
@@ -199,6 +203,40 @@ database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
     return cast(^T)component, ERROR_NONE
 }
 
+////////////////// QUERYING
+
+
+database_query :: proc (self: ^Database, include: Component_Signature, exclude:=[]typeid{}) -> []Entity_Id {
+
+    entities_n := 0
+    for ent in self.entity_factory.alive_ids {
+        if !database_entity_is_valid(self, ent) do continue
+
+        sign := self.signatures[ent.idx]
+        if sign >= include {
+            skip := false
+            for t in exclude {
+                assert(t in self.typeid_to_tid) // sanity check
+                tid := self.typeid_to_tid[t]
+                if tid in sign {
+                    skip = true
+                    break
+                }
+            }
+            if skip do continue
+
+            self.queried_entities[entities_n] = ent     
+            entities_n += 1
+        }
+    }
+
+    queried := self.queried_entities
+    queried_raw := (^runtime.Raw_Slice)(&queried)
+    queried_raw.len = entities_n
+
+    return queried
+}
+
 ////////////////// DATABASE FREEING
 
 
@@ -215,6 +253,7 @@ database_free :: proc (self: ^Database, loc:=#caller_location) -> Error {
     
     delete(self.signatures, self.allocator, loc) or_return
     delete(self.typeid_to_tid, loc) or_return
+    delete(self.queried_entities, self.allocator, loc) or_return
 
     return ERROR_NONE
 }
@@ -305,4 +344,35 @@ database_test :: proc (_: ^testing.T) {
     entity, err = database_create_entity(&db)
     assert(err == ERROR_NONE, error_to_str(err))
     assert(entity.gen == 1, "Entity generation is not equal to 1, even if it was reused.")
+
+    // test querying
+    for i in 1..=10 {
+        entity, err = database_create_entity(&db)
+        assert(err == ERROR_NONE, error_to_str(err))
+
+        some_data, err = database_add_component(&db, entity, Some_Type)
+        assert(err == ERROR_NONE, error_to_str(err))
+
+        some_data.num = entity.idx
+        if i % 3 == 0 { // add Some_Other_Type to only some entities
+            some_other_data, err = database_add_component(&db, entity, Some_Other_Type)
+            assert(err == ERROR_NONE, error_to_str(err))
+            some_other_data.str = "this entity is divisible by 3"
+        }
+    }
+
+    entities := database_query(&db, database_make_signature(&db, Some_Type), exclude={Some_Other_Type})
+    assert(len(entities) == 7)
+    for entity in entities {
+        some_data, err = database_get_component(&db, entity, Some_Type)
+        assert(err == ERROR_NONE, error_to_str(err))
+        assert(some_data.num == entity.idx)
+    }
+
+    entities = database_query(&db, database_make_signature(&db, Some_Other_Type))
+    for entity in entities {
+        some_other_data, err = database_get_component(&db, entity, Some_Other_Type)
+        assert(err == ERROR_NONE, error_to_str(err))
+        assert(some_other_data.str == "this entity is divisible by 3")
+    }
 }
