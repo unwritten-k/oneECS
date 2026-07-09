@@ -30,13 +30,13 @@ tag_table_init :: proc (self: ^Tag_Table, db: ^Database, type: typeid, loc:=#cal
 ////////////////// TAG OPERATIONS
 
 
-// Sets boolean at entity idx to true. Can fail if entity is invalid
-tag_table_add_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> Error {
-    if !database_entity_is_valid(self.db, entity) do return Collection_Error.Invalid_Entity
+// Sets boolean at entity idx to true and returns handle for it's tag boolean. Can fail if entity is invalid
+tag_table_add_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> (^bool, Error) {
+    if !database_entity_is_valid(self.db, entity) do return nil, Collection_Error.Invalid_Entity
 
     self.entity_to_tag[entity.idx] = true
 
-    return ERROR_NONE
+    return &self.entity_to_tag[entity.idx], ERROR_NONE
 }
 
 // Returns handle for entity's boolean. Can fail if entity is invalid or if entity does not have this tag
