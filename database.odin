@@ -152,7 +152,7 @@ database_get_signature :: #force_inline proc (self: ^Database, ent: Entity_Id) -
 database_make_signature :: #force_inline proc (self: ^Database, types: ..typeid) -> Component_Signature {
     sign: Component_Signature
     for t in types {
-        assert(t in self.typeid_to_tid) // sanity check
+        assert(t in self.typeid_to_tid, "Type is not registered in database") // sanity check
         sign += {self.typeid_to_tid[t]}
     }
     return sign
@@ -243,7 +243,7 @@ database_query :: proc (self: ^Database, include: Component_Signature, exclude:=
         if sign >= include {
             skip := false
             for t in exclude {
-                assert(t in self.typeid_to_tid) // sanity check
+                assert(t in self.typeid_to_tid, "Type is not registered in database") // sanity check
                 tid := self.typeid_to_tid[t]
                 if tid in sign {
                     skip = true
