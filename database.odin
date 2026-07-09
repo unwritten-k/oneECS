@@ -138,6 +138,11 @@ database_entity_is_valid :: #force_inline proc (self: ^Database, ent: Entity_Id)
         && !core.entity_factory_is_expired(&self.entity_factory, ent)
 }
 
+// Returns number of alive entities
+database_number_alive :: #force_inline proc "contextless" (self: ^Database) -> int {
+    return core.entity_factory_len(&self.entity_factory)
+}
+
 ////////////////// SIGNATURE OPERATIONS
 
 

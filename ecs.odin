@@ -7,6 +7,8 @@ create_entity :: database_create_entity
 destroy_entity :: database_destroy_entity
 entity_is_valid :: database_entity_is_valid
 
+num_alive_entities :: database_number_alive
+
 register_component :: database_register
 
 add_component :: database_add_component
