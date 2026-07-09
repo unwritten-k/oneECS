@@ -207,6 +207,19 @@ database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
     return cast(^T)component, ERROR_NONE
 }
 
+database_has_component :: proc (self: ^Database, entity: Entity_Id, T: typeid) -> bool {
+    if !database_entity_is_valid(self, entity) do return false
+    if T not_in self.typeid_to_tid do return false
+
+    basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
+
+    switch t in basic_table.variant {
+        case Table: return table_has_entity(&basic_table.variant.(Table), entity)
+        case Tag_Table: return tag_table_has_component(&basic_table.variant.(Tag_Table), entity)
+    }
+    return false
+}
+
 ////////////////// QUERYING
 
 
