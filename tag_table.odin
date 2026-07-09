@@ -39,6 +39,14 @@ tag_table_add_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> Error {
     return ERROR_NONE
 }
 
+// Returns handle for entity's boolean. Can fail if entity is invalid or if entity does not have this tag
+tag_table_get_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> (^bool, Error) {
+    if !database_entity_is_valid(self.db, entity) do return nil, Collection_Error.Invalid_Entity
+    if !tag_table_has_entity(self, entity) do return nil, Collection_Error.Entity_Not_Found
+    
+    return &self.entity_to_tag[entity.idx], ERROR_NONE
+}
+
 // Sets boolean at entity idx to false. Can fail if entity is invalid
 tag_table_remove_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> Error {
     if !database_entity_is_valid(self.db, entity) do return Collection_Error.Invalid_Entity
@@ -51,6 +59,11 @@ tag_table_remove_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> Erro
 // Returns boolean at entity's idx. True when entity has tag and false when it does not
 tag_table_has_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> bool {
     return database_entity_is_valid(self.db, entity) && self.entity_to_tag[entity.idx]
+}
+
+@(private="file")
+tag_table_has_entity :: proc (self: ^Tag_Table, entity: Entity_Id) -> bool {
+    return self.entity_to_tag[entity.idx]
 }
 
 // Clears tag table completely
