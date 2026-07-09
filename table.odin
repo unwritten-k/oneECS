@@ -133,11 +133,9 @@ table_test :: proc (_: ^testing.T) {
 
     err: Error
 
-    // allocation on heap is required to hide 'bad free' warning
-    // (database tries to free table pointer, 
-    // but if it's allocated on stack, bad free warning is shown)
-    table: ^Table = new(Table, db.allocator)
-    err = table_init(table, &db, 32, int)
+    table: Table
+    err = table_init(&table, &db, 32, int)
+    defer assert(table_free(&table) == ERROR_NONE)
     assert(err == ERROR_NONE, error_to_str(err))
 
     context.allocator = runtime.panic_allocator()
@@ -145,24 +143,24 @@ table_test :: proc (_: ^testing.T) {
     entity, _ := database_create_entity(&db)
 
     // add component to entity
-    err = table_add_component(table, entity)
+    err = table_add_component(&table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
     
     comp_ptr: rawptr
-    comp_ptr, err = table_get_component(table, entity)
+    comp_ptr, err = table_get_component(&table, entity)
     component := cast(^int)comp_ptr
     assert(component^ == 0)
 
     component^ = 15
 
     // check if retreived component is the same as the above
-    comp_ptr, err = table_get_component(table, entity)
+    comp_ptr, err = table_get_component(&table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
     component = cast(^int)comp_ptr
     assert(component^ == 15)
 
     // remove component
-    err = table_remove_component(table, entity)
+    err = table_remove_component(&table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
     assert(component^ == 0) // check if component is actually zeroed
 }
