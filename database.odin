@@ -169,10 +169,7 @@ database_add_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
 
     basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
 
-    table, ok := &basic_table.variant.(Table)
-    if !ok do return nil, Registry_Error.Wrong_Table_Type
-
-    component, err := table_add_component(&basic_table.variant.(Table), entity)
+    component, err := basic_table_add(basic_table, entity)
     if err != ERROR_NONE do return nil, err
 
     return cast(^T)component, ERROR_NONE
@@ -185,10 +182,7 @@ database_remove_component :: proc (self: ^Database, entity: Entity_Id, T: typeid
 
     basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
 
-    table, ok := &basic_table.variant.(Table)
-    if !ok do return Registry_Error.Wrong_Table_Type
-
-    return table_remove_component(table, entity)
+    return basic_table_remove(basic_table, entity)
 }
 
 // Returns component of given entity. Can fail if entity is invalid or given type is not registered
@@ -198,10 +192,7 @@ database_get_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) 
 
     basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
 
-    table, ok := &basic_table.variant.(Table)
-    if !ok do return nil, Registry_Error.Wrong_Table_Type
-
-    component, err := table_get_component(&basic_table.variant.(Table), entity)
+    component, err := basic_table_get(basic_table, entity)
     if err != ERROR_NONE do return nil, err
 
     return cast(^T)component, ERROR_NONE
@@ -213,11 +204,7 @@ database_has_component :: proc (self: ^Database, entity: Entity_Id, T: typeid) -
 
     basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
 
-    switch t in basic_table.variant {
-        case Table: return table_has_entity(&basic_table.variant.(Table), entity)
-        case Tag_Table: return tag_table_has_component(&basic_table.variant.(Tag_Table), entity)
-    }
-    return false
+    return basic_table_has(basic_table, entity)
 }
 
 ////////////////// QUERYING
