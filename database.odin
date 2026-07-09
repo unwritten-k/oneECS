@@ -395,9 +395,29 @@ database_test :: proc (_: ^testing.T) {
     }
 
     entities = database_query(&db, database_make_signature(&db, Some_Other_Type))
+    assert(len(entities) == 3)
     for entity in entities {
         some_other_data, err = database_get_component(&db, entity, Some_Other_Type)
         assert(err == ERROR_NONE, error_to_str(err))
         assert(some_other_data.str == "this entity is divisible by 3")
+    }
+
+    // test tag components
+    Some_Tag :: struct {}
+
+    err = database_register_tag_component(&db, Some_Tag)
+    assert(err == ERROR_NONE, error_to_str(err))
+
+    for i in 0..<3 {
+        entity, err = database_create_entity(&db)
+        assert(err == ERROR_NONE, error_to_str(err))
+
+        _, err = database_add_component(&db, entity, Some_Tag)
+        assert(err == ERROR_NONE, error_to_str(err))
+    }
+
+    entities = database_query(&db, database_make_signature(&db, Some_Tag))
+    for entity in entities {
+        assert(database_has_component(&db, entity, Some_Tag))
     }
 }
