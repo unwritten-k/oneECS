@@ -39,13 +39,13 @@ health, _ := ecs.get_component(&db, entity, Health)
 health.max_points = 100
 health.points = health.max_points
 
-health_signatrue := ecs.make_signature(&db, Health)
+health_signature := ecs.make_signature(&db, Health)
 damage_system :: proc (db: ^ecs.Database) {
     result := ecs.query(db, health_signature, exclude={Dead})
 
     DAMAGE :: 5 
     health: ^Health
-    for entity in query {
+    for entity in result {
         health, _ = ecs.get_component(db, entity, Health)
         
         if health.points > 0 do health.points -= DAMAGE
