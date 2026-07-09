@@ -57,7 +57,7 @@ for i in 0..<20 {
     damage_system(&db)
 }
 
-if ecs.has_component(db, entity, Dead) {
+if ecs.has_component(&db, entity, Dead) {
     fmt.println("Entity", entity.idx, "is dead")
 }
 
