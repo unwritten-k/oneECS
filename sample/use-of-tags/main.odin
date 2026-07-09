@@ -14,9 +14,10 @@ Health :: struct {
 // A tag component
 Dead :: struct {}
 
+damage_system_signature: ecs.Component_Signature
+
 damage_entities :: proc (db: ^ecs.Database) {
-    sign := ecs.make_signature(db, Health)
-    query := ecs.query(db, sign, exclude={Dead})
+    query := ecs.query(db, damage_system_signature, exclude={Dead})
 
     health: ^Health
     rand_damage: int
@@ -30,9 +31,10 @@ damage_entities :: proc (db: ^ecs.Database) {
     }
 }
 
+print_num_of_dead_signature: ecs.Component_Signature
+
 print_num_of_dead :: proc (db: ^ecs.Database) {
-    sign := ecs.make_signature(db, Dead)
-    query := ecs.query(db, sign)
+    query := ecs.query(db, print_num_of_dead_signature)
 
     fmt.println("Number of dead entities:", len(query), "/", ecs.database_entity_len(db))
 }
@@ -44,6 +46,9 @@ main :: proc () {
 
     ecs.register_component(&db, Health)
     ecs.register_component(&db, Dead)
+
+    damage_system_signature = ecs.make_signature(&db, Health)
+    print_num_of_dead_signature = ecs.make_signature(&db, Dead)
 
     for i in 0..<1024 {
         entity, _ := ecs.create_entity(&db)

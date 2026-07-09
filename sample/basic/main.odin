@@ -8,10 +8,11 @@ Position :: struct {
     x, y: f32
 }
 
+move_entities_signature: ecs.Component_Signature
+
 move_entities :: proc (db: ^ecs.Database) {
     
-    signature := ecs.make_signature(db, Position)
-    query := ecs.query(db, signature)
+    query := ecs.query(db, move_entities_signature)
 
     pos: ^Position
     offset_x: f32
@@ -46,6 +47,8 @@ main :: proc () {
     defer ecs.database_free(&db)
 
     ecs.register_component(&db, Position)
+
+    move_entities_signature = ecs.make_signature(&db, Position)
 
     for i in 0..<10 {
         entity, _ := ecs.create_entity(&db)
