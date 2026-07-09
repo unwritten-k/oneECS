@@ -35,6 +35,7 @@ tag_table_add_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> Error {
     if !database_entity_is_valid(self.db, entity) do return Collection_Error.Invalid_Entity
 
     self.entity_to_tag[entity.idx] = true
+    database_signature_add_component(self.db, entity, self.t_id) or_return
 
     return ERROR_NONE
 }
@@ -44,6 +45,7 @@ tag_table_remove_component :: proc (self: ^Tag_Table, entity: Entity_Id) -> Erro
     if !database_entity_is_valid(self.db, entity) do return Collection_Error.Invalid_Entity
 
     self.entity_to_tag[entity.idx] = false
+    database_signature_remove_component(self.db, entity, self.t_id) or_return
 
     return ERROR_NONE
 }
