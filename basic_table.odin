@@ -1,3 +1,4 @@
+#+private
 package one_ecs
 
 import "base:runtime"
