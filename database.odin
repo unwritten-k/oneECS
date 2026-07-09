@@ -97,6 +97,15 @@ database_register_tag_component :: proc (self: ^Database, type_id: typeid, loc:=
     return ERROR_NONE
 }
 
+// Checks size of given typeid,
+// and if it's 0 then type is registered as tag component.
+// Otherwise it is registered as regular component
+database_register :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
+    type_info := type_info_of(type_id)
+    if type_info.size == 0 do return database_register_tag_component(self, type_id, loc)
+    else do return database_register_component(self, type_id, loc)
+}
+
 ////////////////// ENTITY OPERATIONS
 
 
