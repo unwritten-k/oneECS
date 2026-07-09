@@ -34,7 +34,7 @@ print_num_of_dead :: proc (db: ^ecs.Database) {
     sign := ecs.make_signature(db, Dead)
     query := ecs.query(db, sign)
 
-    fmt.println("Number of dead entities:", len(query), "/", ecs.num_alive_entities(db))
+    fmt.println("Number of dead entities:", len(query), "/", ecs.database_entity_len(db))
 }
 
 main :: proc () {
