@@ -184,7 +184,11 @@ database_remove_component :: proc (self: ^Database, entity: Entity_Id, T: typeid
     if T not_in self.typeid_to_tid do return Registry_Error.Not_Registered
 
     basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
-    return basic_table_remove(basic_table, entity)
+
+    table, ok := &basic_table.variant.(Table)
+    if !ok do return Registry_Error.Wrong_Table_Type
+
+    return table_remove_component(table, entity)
 }
 
 // Returns component of given entity. Can fail if entity is invalid or given type is not registered
