@@ -77,8 +77,24 @@ database_register_component :: proc (self: ^Database, type_id: typeid, loc:=#cal
 
 // Allocates new tag table, that only stores boolean if entity has component or not,
 // and registers it under the given type. Can fail if given type is already registered
-database_register_tag :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
-    unimplemented("Tag table are not implemented yet")
+database_register_tag_component :: proc (self: ^Database, type_id: typeid, loc:=#caller_location) -> Error {
+    if type_id in self.typeid_to_tid do return Registry_Error.Already_Registered
+    if self.attached_tables_count >= len(self.tid_to_table) do return Collection_Error.Exceeded_Capacity
+
+    basic_table := Basic_Table{variant=Tag_Table{}}
+    tag_table := &basic_table.variant.(Tag_Table)
+    tag_table_init(tag_table, self, type_id, loc) or_return
+
+    basic_table.type_info = tag_table.type_info
+
+    tid := self.attached_tables_count
+    tag_table.t_id = tid
+
+    self.tid_to_table[tid] = basic_table
+    self.typeid_to_tid[tag_table.type_info.id] = tid
+    self.attached_tables_count += 1
+
+    return ERROR_NONE
 }
 
 ////////////////// ENTITY OPERATIONS
