@@ -47,24 +47,22 @@ table_init :: proc (self: ^Table, db: ^Database, capacity: int, type: typeid, lo
 // Links component ID to entity and
 // returns pointer to bytes on that ID.
 // Can fail if entity is invalid or entity already has that component
-table_add_component :: proc (self: ^Table, ent: Entity_Id) -> (rawptr, Error) {
-    if !database_entity_is_valid(self.db, ent) do return nil, Collection_Error.Invalid_Entity
-    if table_has_entity(self, ent) do return nil, Collection_Error.Already_Added
+table_add_component :: proc (self: ^Table, ent: Entity_Id) -> Error {
+    if !database_entity_is_valid(self.db, ent) do return Collection_Error.Invalid_Entity
+    if table_has_entity(self, ent) do return Collection_Error.Already_Added
 
     id := self.components_count * self.type_info.size
     self.entity_to_id[ent.idx] = id
 
-    slice := self.bytes[id : id+self.type_info.size]
-
     err := database_signature_add_component(self.db, ent, self.t_id)
     if err != ERROR_NONE {
         self.entity_to_id[ent.idx] = INVALID_ID
-        return nil, err
+        return err
     }
 
     self.components_count += 1
     
-    return raw_data(slice), ERROR_NONE
+    return ERROR_NONE
 }
 
 // Marks given entity's ID as invalid
@@ -147,10 +145,11 @@ table_test :: proc (_: ^testing.T) {
     entity, _ := database_create_entity(&db)
 
     // add component to entity
-    comp_ptr: rawptr
-    comp_ptr, err = table_add_component(table, entity)
+    err = table_add_component(table, entity)
     assert(err == ERROR_NONE, error_to_str(err))
-
+    
+    comp_ptr: rawptr
+    comp_ptr, err = table_get_component(table, entity)
     component := cast(^int)comp_ptr
     assert(component^ == 0)
 

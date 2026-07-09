@@ -7,13 +7,12 @@ Basic_Table :: struct {
     variant: union {Table, Tag_Table}
 }
 
-// If table's variant is tag table, then returned pointer will always be nil
-basic_table_add :: proc (self: ^Basic_Table, entity: Entity_Id) -> (rawptr, Error) {
+basic_table_add :: proc (self: ^Basic_Table, entity: Entity_Id) -> Error {
     switch t in self.variant {
         case Table:     return table_add_component(&self.variant.(Table), entity)
-        case Tag_Table: return nil, tag_table_add_component(&self.variant.(Tag_Table), entity)
+        case Tag_Table: return tag_table_add_component(&self.variant.(Tag_Table), entity)
     }
-    return nil, ERROR_NONE
+    return ERROR_NONE
 }
 
 // This function will always fail for basic tables which variant is Tag_Table

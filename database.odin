@@ -1,5 +1,6 @@
 package one_ecs
 
+import "core:log"
 import "core:testing"
 import "base:runtime"
 import core "core"
@@ -188,16 +189,13 @@ database_signature_clear :: proc (self: ^Database, ent: Entity_Id) -> Error {
 
 
 // Adds component to given entity. Can fail if entity is invalid or given type is not registered
-database_add_component :: proc (self: ^Database, entity: Entity_Id, $T: typeid) -> (^T, Error) {
-    if !database_entity_is_valid(self, entity) do return nil, Collection_Error.Invalid_Entity
-    if T not_in self.typeid_to_tid do return nil, Registry_Error.Not_Registered
+database_add_component :: proc (self: ^Database, entity: Entity_Id, T: typeid) -> Error {
+    if !database_entity_is_valid(self, entity) do return Collection_Error.Invalid_Entity
+    if T not_in self.typeid_to_tid do return Registry_Error.Not_Registered
 
     basic_table := &self.tid_to_table[self.typeid_to_tid[T]]
 
-    component, err := basic_table_add(basic_table, entity)
-    if err != ERROR_NONE do return nil, err
-
-    return cast(^T)component, ERROR_NONE
+    return basic_table_add(basic_table, entity)
 }
 
 // Removes component from given entity. Can fail if entity is invalid or given type is not registered
@@ -322,17 +320,21 @@ database_test :: proc (_: ^testing.T) {
     assert(db.typeid_to_tid[Some_Other_Type] == 1, "Typeid 'Some_Other_Type' points to wrong table id")
 
     // add first component to the entity
-    some_data: ^Some_Type
-    some_data, err = database_add_component(&db, entity, Some_Type)
+    err = database_add_component(&db, entity, Some_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
+    some_data: ^Some_Type
+    some_data, err = database_get_component(&db, entity, Some_Type)
+    assert(err == ERROR_NONE, error_to_str(err))
     some_data.num = 120
 
     // add second component to the entity
-    some_other_data: ^Some_Other_Type
-    some_other_data, err = database_add_component(&db, entity, Some_Other_Type)
+    err = database_add_component(&db, entity, Some_Other_Type)
     assert(err == ERROR_NONE, error_to_str(err))
 
+    some_other_data: ^Some_Other_Type
+    some_other_data, err = database_get_component(&db, entity, Some_Other_Type)
+    assert(err == ERROR_NONE, error_to_str(err))
     some_other_data.str = "hello world"
 
     // check validity of signature
@@ -375,12 +377,17 @@ database_test :: proc (_: ^testing.T) {
         entity, err = database_create_entity(&db)
         assert(err == ERROR_NONE, error_to_str(err))
 
-        some_data, err = database_add_component(&db, entity, Some_Type)
+        err = database_add_component(&db, entity, Some_Type)
         assert(err == ERROR_NONE, error_to_str(err))
 
+        some_data, err = database_get_component(&db, entity, Some_Type)
+        assert(err == ERROR_NONE, error_to_str(err))
         some_data.num = entity.idx
         if i % 3 == 0 { // add Some_Other_Type to only some entities
-            some_other_data, err = database_add_component(&db, entity, Some_Other_Type)
+            err = database_add_component(&db, entity, Some_Other_Type)
+            assert(err == ERROR_NONE, error_to_str(err))
+
+            some_other_data, err = database_get_component(&db, entity, Some_Other_Type)
             assert(err == ERROR_NONE, error_to_str(err))
             some_other_data.str = "this entity is divisible by 3"
         }
@@ -412,11 +419,12 @@ database_test :: proc (_: ^testing.T) {
         entity, err = database_create_entity(&db)
         assert(err == ERROR_NONE, error_to_str(err))
 
-        _, err = database_add_component(&db, entity, Some_Tag)
+        err = database_add_component(&db, entity, Some_Tag)
         assert(err == ERROR_NONE, error_to_str(err))
     }
 
     entities = database_query(&db, database_make_signature(&db, Some_Tag))
+    assert(len(entities) == 3)
     for entity in entities {
         assert(database_has_component(&db, entity, Some_Tag))
     }
