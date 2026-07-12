@@ -238,11 +238,14 @@ database_has_component :: proc (self: ^Database, entity: Entity_Id, T: typeid) -
 ////////////////// QUERYING
 
 
-database_query :: proc (self: ^Database, include: Component_Signature, exclude:=[]typeid{}) -> []Entity_Id {
+// Returns all entities that match `include` signature and do not have any components from `exclude` slice.
+// Unless `limit` is set to 0, it will not return amount entities past the limit
+database_query :: proc (self: ^Database, include: Component_Signature, exclude:=[]typeid{}, limit:=0) -> []Entity_Id {
 
     entities_n := 0
     for ent in self.entity_factory.alive_ids {
         if !database_entity_is_valid(self, ent) do continue
+        if entities_n >= limit do break
 
         sign := self.signatures[ent.idx]
         if sign >= include {
