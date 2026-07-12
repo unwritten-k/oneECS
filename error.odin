@@ -8,7 +8,6 @@ Collection_Error :: enum {
     None=0,
     Invalid_Entity,
     Entity_Not_Found,
-    Already_Added,
     Exceeded_Capacity,
 }
 
