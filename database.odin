@@ -245,7 +245,7 @@ database_query :: proc (self: ^Database, include: Component_Signature, exclude:=
     entities_n := 0
     for ent in self.entity_factory.alive_ids {
         if !database_entity_is_valid(self, ent) do continue
-        if entities_n >= limit do break
+        if limit > 0 && entities_n >= limit do break
 
         sign := self.signatures[ent.idx]
         if sign >= include {
