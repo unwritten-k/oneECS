@@ -35,7 +35,7 @@ basic_table_remove :: proc (self: ^Basic_Table, entity: Entity_Id) -> Error {
 
 basic_table_has :: proc (self: ^Basic_Table, entity: Entity_Id) -> bool {
     switch t in self.variant {
-        case Table:     return table_has_entity(&self.variant.(Table), entity)
+        case Table:     return table_has_component(&self.variant.(Table), entity)
         case Tag_Table: return tag_table_has_component(&self.variant.(Tag_Table), entity)
     }
     return false
