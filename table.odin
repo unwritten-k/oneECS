@@ -49,7 +49,7 @@ table_init :: proc (self: ^Table, db: ^Database, capacity: int, type: typeid, lo
 // Can fail if entity is invalid or entity already has that component
 table_add_component :: proc (self: ^Table, ent: Entity_Id) -> Error {
     if !database_entity_is_valid(self.db, ent) do return Collection_Error.Invalid_Entity
-    if table_has_entity(self, ent) do return Collection_Error.Already_Added
+    if table_has_entity(self, ent) do return ERROR_NONE // do nothing
 
     id := self.components_count * self.type_info.size
     self.entity_to_id[ent.idx] = id
